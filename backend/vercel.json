@@ -7,6 +7,7 @@
   "env": {
     "STRIPE_SECRET_KEY": "",
     "STRIPE_WEBHOOK_SECRET": "",
-    "CLIENT_URL": "https://gustomediterraneoroma.it"
+    "CLIENT_URL": "https://gustomediterraneoroma.it",
+    "CLIENT_URL_2": "https://www.gustomediterraneoroma.it"
   }
 }

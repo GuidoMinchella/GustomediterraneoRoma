@@ -20,6 +20,10 @@
     {
       "source": "/api/(.*)",
       "destination": "https://api.gustomediterraneoroma.it/api/$1"
+    },
+    {
+      "source": "/((?!api).*)",
+      "destination": "/"
     }
   ],
   "env": {

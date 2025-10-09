@@ -1,4 +1,4 @@
-import { stripe, cors, handleOptions } from './_utils.js';
+import { stripe, cors, handleOptions } from '../lib/_utils.js';
 
 export default async function handler(req, res) {
   cors(req, res);

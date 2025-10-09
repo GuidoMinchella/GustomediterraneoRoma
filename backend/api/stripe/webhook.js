@@ -1,4 +1,4 @@
-import { stripe } from '../_utils.js';
+import { stripe } from '../../lib/_utils.js';
 import getRawBody from 'raw-body';
 
 // Nota: su Vercel serverless è necessario leggere il body raw per verificare la firma

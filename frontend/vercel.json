@@ -3,6 +3,19 @@
   "framework": "vite",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [{ "type": "host", "value": "gustomediterraneoroma.it" }],
+      "destination": "https://www.gustomediterraneoroma.it/$1",
+      "permanent": true
+    },
+    {
+      "source": "/public/images/(.*)",
+      "destination": "/images/$1",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/(.*)",

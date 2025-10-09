@@ -17,10 +17,4 @@
     { "src": "/api/checkout-session", "dest": "api/checkout-session.js" },
     { "src": "/api/stripe/webhook", "dest": "api/stripe/webhook.js" }
   ],
-  "env": {
-    "STRIPE_SECRET_KEY": "",
-    "STRIPE_WEBHOOK_SECRET": "",
-    "CLIENT_URL": "https://gustomediterraneoroma.it",
-    "CLIENT_URL_2": "https://www.gustomediterraneoroma.it"
-  }
 }

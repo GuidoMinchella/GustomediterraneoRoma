@@ -10,6 +10,7 @@
     }
   },
   "routes": [
+    { "src": "/api/ping", "dest": "api/ping.js" },
     { "src": "/api/create-payment-intent", "dest": "api/create-payment-intent.js" },
     { "src": "/api/payment-intent", "dest": "api/payment-intent.js" },
     { "src": "/api/create-checkout-session", "dest": "api/create-checkout-session.js" },

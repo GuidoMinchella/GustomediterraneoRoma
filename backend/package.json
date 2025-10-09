@@ -3,6 +3,9 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "scripts": {
+    "build": "echo \"No build step: Vercel Node serverless\""
+  },
   "dependencies": {
     "stripe": "^19.1.0",
     "raw-body": "^3.0.0"

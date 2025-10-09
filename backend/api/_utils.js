@@ -2,16 +2,32 @@ import Stripe from 'stripe';
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-export function cors(res) {
-  const origin = process.env.CLIENT_URL || '*';
-  res.setHeader('Access-Control-Allow-Origin', origin);
+export function cors(req, res) {
+  const requestOrigin = req.headers?.origin;
+  const allowedOrigins = [
+    process.env.CLIENT_URL,
+    process.env.CLIENT_URL_2,
+    'https://gustomediterraneoroma.it',
+    'https://www.gustomediterraneoroma.it',
+  ].filter(Boolean);
+
+  let originToUse = process.env.CLIENT_URL || '*';
+  if (requestOrigin && allowedOrigins.includes(String(requestOrigin))) {
+    originToUse = requestOrigin;
+  }
+
+  res.setHeader('Access-Control-Allow-Origin', originToUse);
+  res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (originToUse !== '*') {
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  }
 }
 
 export function handleOptions(req, res) {
   if (req.method === 'OPTIONS') {
-    cors(res);
+    cors(req, res);
     res.status(200).end();
     return true;
   }

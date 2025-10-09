@@ -1,7 +1,7 @@
 import { stripe, cors, handleOptions, getOrCreateCustomerByEmail } from './_utils.js';
 
 export default async function handler(req, res) {
-  cors(res);
+  cors(req, res);
   if (handleOptions(req, res)) return;
 
   if (req.method !== 'POST') {

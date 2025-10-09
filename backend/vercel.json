@@ -1,6 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
+  "framework": "other",
+  "builds": [
+    { "src": "api/**/*.js", "use": "@vercel/node" }
+  ],
   "env": {
     "STRIPE_SECRET_KEY": "",
     "STRIPE_WEBHOOK_SECRET": "",

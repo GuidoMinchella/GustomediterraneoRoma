@@ -149,7 +149,7 @@
 }
 
 .dropdown-anim.open {
-  max-height: 90vh;
+  max-height: 60vh;
   opacity: 1;
   transform: translateY(0);
 }

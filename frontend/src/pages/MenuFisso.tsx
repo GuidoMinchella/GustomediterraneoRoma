@@ -297,16 +297,26 @@ const MenuFisso: React.FC = () => {
           </p>
         </div>
 
-        {/* Crudo su Ordinazione */}
-        <div className="mb-6">
-          <Card className="bg-gradient-to-r from-mediterranean-blu-scuro to-mediterranean-blu-medio text-white">
-            <div className="text-center py-3 md:py-4">
-              <ChefHat className="w-8 h-8 md:w-10 md:h-10 mx-auto mb-2 md:mb-3 text-mediterranean-bianco" />
+        {/* Crudo su Ordinazione con immagine di sfondo e overlay scuro */}
+        <div className="mb-4">
+          <Card className="relative overflow-hidden text-white">
+            {/* Background image */}
+            <div
+              className="absolute inset-0 bg-cover bg-center"
+              style={{ backgroundImage: "url('/images/img.webp')" }}
+              aria-hidden="true"
+            />
+            {/* Dark overlay */}
+            <div className="absolute inset-0 bg-black/50" aria-hidden="true" />
+
+            {/* Content */}
+            <div className="relative text-center py-3 md:py-4 px-4">
+              <ChefHat className="w-8 h-8 md:w-10 md:h-10 mx-auto mb-2 md:mb-3 text-white" />
               <h3 className="font-serif text-lg md:text-xl font-bold mb-2">
                 Crudo di Pesce Fresco
               </h3>
-              <p className="text-mediterranean-bianco/90 mb-3 max-w-2xl mx-auto text-sm md:text-base px-4">
-                Su ordinazione è possibile gustare il nostro crudo di pesce freschissimo, 
+              <p className="text-white/90 mb-3 max-w-2xl mx-auto text-sm md:text-base">
+                Su ordinazione è possibile gustare il nostro crudo di pesce freschissimo,
                 preparato con il pescato del giorno. <strong>Prenotazione richiesta almeno un giorno prima.</strong>
               </p>
               <Button
@@ -318,6 +328,16 @@ const MenuFisso: React.FC = () => {
               </Button>
             </div>
           </Card>
+        </div>
+
+        {/* Separatore bianco sfumato e sezione salse */}
+        <div className="mb-8">
+          <div className="flex justify-center">
+            <div className="h-[2px] w-full bg-gradient-to-r from-white/0 via-white/90 to-white/0" />
+          </div>
+          <p className="mt-3 text-center italic text-mediterranean-blu-scuro/80">
+            *tutte le salse che offriamo sono preparate da noi*
+          </p>
         </div>
 
         {fixedMenuDishes.length === 0 ? (

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+import { clearAdminSession } from '../utils/adminAuth';
 
 interface AuthContextType {
   user: User | null;
@@ -127,6 +128,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
+    try {
+      clearAdminSession();
+    } catch (_e) {}
     return { error };
   };
 

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { X, User, Mail, Calendar, LogOut } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import Button from '../UI/Button';
@@ -11,6 +12,7 @@ interface UserDashboardProps {
 export const UserDashboard: React.FC<UserDashboardProps> = ({ isOpen, onClose }) => {
   const { user, signOut } = useAuth();
   const dashboardRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   // Chiudi dashboard quando si clicca fuori
   useEffect(() => {
@@ -52,6 +54,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ isOpen, onClose })
     try {
       await signOut();
       onClose();
+      navigate('/');
     } catch (error) {
       console.error('Errore durante il logout:', error);
     }

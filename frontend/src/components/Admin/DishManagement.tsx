@@ -1,489 +1,664 @@
 import React, { useState, useEffect } from 'react';
-import { useDish } from '../../context/DishContext';
-import { Dish } from '../../context/DishContext';
-import { Plus, Edit2, Trash2, AlertCircle } from 'lucide-react';
-import Button from '../UI/Button';
+import { supabase } from '../../lib/supabase';
+import { Package, Calendar, Clock, User, Phone, Mail, CreditCard, Eye, EyeOff, ChevronDown, ChevronUp, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 
-const DishManagement: React.FC = () => {
-  const { dishes, loading, error, addDish, updateDish, deleteDish, fetchDishes } = useDish();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingDish, setEditingDish] = useState<Dish | null>(null);
-  const [pricingType, setPricingType] = useState<'fixed' | 'by_weight'>('fixed');
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    price: '',
-    category: 'antipasti' as 'antipasti' | 'primi' | 'secondi' | 'contorni' | 'fritture' | 'panini' | 'vini',
-    allergens: [] as string[],
-    tags: [] as string[],
-    image_url: '',
-    available: true,
-    limited_quantity: false
-  });
+interface Order {
+  id: string;
+  order_number: string;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  pickup_date: string;
+  pickup_time: string;
+  payment_method: 'pickup' | 'online';
+  payment_status: 'pending' | 'paid' | 'failed';
+  order_status: 'received' | 'preparing' | 'ready' | 'completed' | 'cancelled';
+  total_amount: number;
+  original_amount?: number;
+  discount_type?: string;
+  discount_percentage?: number;
+  discount_amount?: number;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  order_items: OrderItem[];
+}
 
-  const categories = ['antipasti', 'primi', 'secondi', 'contorni', 'fritture', 'panini', 'vini'];
-  const commonAllergens = ['glutine', 'latte', 'uova', 'pesce', 'molluschi', 'crostacei', 'soia', 'frutta a guscio', 'sedano', 'senape', 'sesamo', 'solfiti'];
+interface OrderItem {
+  id: string;
+  dish_name: string;
+  dish_price: number;
+  quantity: number;
+  subtotal: number;
+  pricing_type?: 'fixed' | 'by_weight';
+  weight_grams?: number | null;
+}
+
+const OrdersManagement: React.FC = () => {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [paymentFilter, setPaymentFilter] = useState<string>('all');
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+
+  // Chiudi il pannello cliccando ovunque nella pagina (fuori dai card),
+  // mantenendo stopPropagation sui card per evitare chiusure involontarie
+  useEffect(() => {
+    const handleDocumentClick = () => {
+      if (expandedOrder) setExpandedOrder(null);
+    };
+    document.addEventListener('click', handleDocumentClick);
+    return () => document.removeEventListener('click', handleDocumentClick);
+  }, [expandedOrder]);
 
   useEffect(() => {
-    fetchDishes();
-  }, [fetchDishes]); // Ora fetchDishes è memoizzato, quindi è sicuro includerlo
+    fetchOrders();
+  }, []);
 
-  // Se c'è un errore, mostra un messaggio di errore
-  if (error) {
-    return (
-      <div className="p-6">
-        <div className="bg-red-50 border border-red-200 rounded-md p-4">
-          <div className="flex items-center">
-            <AlertCircle className="w-5 h-5 text-red-400 mr-2" />
-            <div>
-              <h3 className="text-sm font-medium text-red-800">
-                Errore nel caricamento dei piatti
-              </h3>
-              <p className="text-sm text-red-700 mt-1">
-                {error}
-              </p>
-              <p className="text-sm text-red-600 mt-2">
-                Assicurati che la tabella 'dishes' sia stata creata in Supabase con lo schema corretto.
-              </p>
-              <Button 
-                onClick={fetchDishes} 
-                className="mt-3 bg-red-600 hover:bg-red-700"
-                size="sm"
-              >
-                Riprova
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      console.log('Fetching orders using admin function...');
+      
+      const { data: ordersData, error } = await supabase
+        .rpc('get_admin_orders');
 
-  // Se è in caricamento, mostra un indicatore di caricamento migliorato
+      console.log('Orders query result:', { ordersData, error });
+
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+
+      // Fetch order items in bulk and attach to each order
+      const baseOrders = ordersData || [];
+      const orderIds = baseOrders.map((o: any) => o.id).filter(Boolean);
+      let mergedOrders = baseOrders;
+      if (orderIds.length > 0) {
+        let { data: itemsData, error: itemsError } = await supabase
+          .from('order_items')
+          .select('id, order_id, dish_name, dish_price, quantity, subtotal, pricing_type, weight_grams')
+          .in('order_id', orderIds);
+
+        if (itemsError) {
+          const msg = String(itemsError.message || '').toLowerCase();
+          if (msg.includes('pricing_type') || msg.includes('weight_grams') || msg.includes('schema cache')) {
+            console.warn('Colonne peso non disponibili su order_items: fallback senza pricing_type/weight_grams');
+            const { data: fallbackItems, error: fallbackErr } = await supabase
+              .from('order_items')
+              .select('id, order_id, dish_name, dish_price, quantity, subtotal')
+              .in('order_id', orderIds);
+            if (!fallbackErr) {
+              itemsData = fallbackItems;
+            } else {
+              console.warn('Errore anche nel fallback degli order_items:', fallbackErr);
+            }
+          } else {
+            console.warn('Errore nel recupero degli order_items:', itemsError);
+          }
+        }
+
+        const itemsByOrder: Record<string, OrderItem[]> = {};
+        (itemsData || []).forEach((it: any) => {
+          const oid = it.order_id;
+          if (!itemsByOrder[oid]) itemsByOrder[oid] = [] as OrderItem[];
+          itemsByOrder[oid].push({
+            id: it.id,
+            dish_name: it.dish_name,
+            dish_price: Number(it.dish_price || 0),
+            quantity: Number(it.quantity || 0),
+            subtotal: Number(it.subtotal || 0),
+            pricing_type: it.pricing_type,
+            weight_grams: it.weight_grams,
+          });
+        });
+
+        mergedOrders = baseOrders.map((o: any) => ({
+          ...o,
+          order_items: itemsByOrder[o.id] || [],
+        }));
+      }
+
+      console.log('Setting orders data (merged with items):', mergedOrders);
+      setOrders(mergedOrders);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateOrderStatus = async (orderId: string, newStatus: string) => {
+    try {
+      console.log('Attempting to update order status:', { orderId, newStatus });
+      console.log('Current user:', await supabase.auth.getUser());
+      
+      const { data, error } = await supabase
+        .from('orders')
+        .update({ order_status: newStatus })
+        .eq('id', orderId)
+        .select();
+
+      console.log('Update result:', { data, error });
+
+      if (error) {
+        console.error('Supabase error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        throw error;
+      }
+
+      // Update local state
+      setOrders(orders.map(order => 
+        order.id === orderId 
+          ? { ...order, order_status: newStatus as Order['order_status'] }
+          : order
+      ));
+      
+      console.log('Order status updated successfully');
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      alert('Errore nell\'aggiornamento dello stato dell\'ordine: ' + (error as any)?.message || 'Errore sconosciuto');
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'received':
+        return 'bg-blue-100 text-blue-800';
+      case 'preparing':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'ready':
+        return 'bg-green-100 text-green-800';
+      case 'completed':
+        return 'bg-gray-100 text-gray-800';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'received':
+        return 'Ricevuto';
+      case 'preparing':
+        return 'In Preparazione';
+      case 'ready':
+        return 'Pronto';
+      case 'completed':
+        return 'Completato';
+      case 'cancelled':
+        return 'Annullato';
+      default:
+        return status;
+    }
+  };
+
+  const getPaymentStatusColor = (status: string) => {
+    switch (status) {
+      case 'paid':
+        return 'bg-green-100 text-green-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'failed':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getPaymentStatusText = (status: string) => {
+    switch (status) {
+      case 'paid':
+        return 'Pagato';
+      case 'pending':
+        return 'In Attesa';
+      case 'failed':
+        return 'Fallito';
+      default:
+        return status;
+    }
+  };
+
+  // Etichetta pagamento per pannello admin, basata su metodo e stato
+  const getAdminPaymentLabel = (order: Order) => {
+    if (order.payment_method === 'online') {
+      if (order.payment_status === 'paid') return 'Pagato sul sito';
+      if (order.payment_status === 'failed') return 'Fallito';
+      return 'In Attesa';
+    }
+    if (order.payment_method === 'pickup') {
+      return 'Pagamento alla consegna';
+    }
+    // Fallback
+    return getPaymentStatusText(order.payment_status);
+  };
+
+  // Helpers for date filtering
+  const dateToYMD = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const da = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${da}`;
+  };
+  const addDays = (d: Date, delta: number) => {
+    const nd = new Date(d);
+    nd.setDate(nd.getDate() + delta);
+    return nd;
+  };
+  const today = new Date();
+  const isSameYMD = (d1: Date, d2: Date) => dateToYMD(d1) === dateToYMD(d2);
+  const isToday = (d: Date) => isSameYMD(d, today);
+  const isYesterday = (d: Date) => isSameYMD(d, addDays(today, -1));
+  const isTomorrow = (d: Date) => isSameYMD(d, addDays(today, 1));
+  const timeToMinutes = (t?: string) => {
+    const [h = '0', m = '0'] = (t || '').split(':');
+    return Number(h) * 60 + Number(m);
+  };
+
+  // Base filter by search/status/payment (no date yet)
+  const filteredBase = [...orders].filter(order => {
+    const matchesSearch = 
+      order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.customer_email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.customer_phone.includes(searchTerm);
+
+    const matchesStatus = statusFilter === 'all' || order.order_status === statusFilter;
+    const matchesPayment = paymentFilter === 'all' || order.payment_status === paymentFilter;
+
+    return matchesSearch && matchesStatus && matchesPayment;
+  });
+
+  // Filter by selected day using pickup_date (not created_at)
+  const selectedYMD = dateToYMD(selectedDate);
+  const dayFiltered = filteredBase.filter(order => {
+    const pd = order.pickup_date ? new Date(order.pickup_date) : null;
+    if (!pd) return false;
+    return dateToYMD(pd) === selectedYMD;
+  });
+
+  // Sort for the selected day by pickup_time ascending
+  const filteredOrders = [...dayFiltered].sort((a, b) => timeToMinutes(a.pickup_time) - timeToMinutes(b.pickup_time));
+
   if (loading) {
     return (
       <div className="p-6">
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mediterranean-marroncino mx-auto mb-4"></div>
-            <p className="text-gray-600">Caricamento piatti in corso...</p>
-            <p className="text-sm text-gray-500 mt-2">
-              Se il caricamento persiste, verifica la connessione a Supabase
-            </p>
-          </div>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mediterranean-marroncino"></div>
         </div>
       </div>
     );
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Rimuovi qualsiasi tag 'by_weight': non serve mostrarlo nei tag
-    const nextTags = Array.from(new Set(
-      (formData.tags || [])
-        .filter(t => t !== 'by_weight')
-    ));
-
-    const dishData = {
-      ...formData,
-      price: parseFloat(formData.price),
-      tags: nextTags,
-      pricing_type: pricingType
-    };
-
-    try {
-      if (editingDish) {
-        await updateDish(editingDish.id, dishData);
-      } else {
-        await addDish(dishData);
-      }
-      
-      resetForm();
-      setIsModalOpen(false);
-    } catch (error) {
-      console.error('Errore nel salvare il piatto:', error);
-      // Mostra un messaggio di errore più dettagliato
-      const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
-      alert(`Errore nel salvare il piatto: ${errorMessage}`);
-    }
-  };
-
-  const handleEdit = (dish: Dish) => {
-    setEditingDish(dish);
-    setFormData({
-      name: dish.name,
-      description: dish.description,
-      price: dish.price.toString(),
-      category: dish.category,
-      allergens: dish.allergens || [],
-      tags: dish.tags || [],
-      image_url: dish.image_url || '',
-      available: dish.available,
-      limited_quantity: dish.limited_quantity || false
-    });
-    setPricingType(dish.pricing_type === 'by_weight' || dish.tags?.includes('by_weight') ? 'by_weight' : 'fixed');
-    setIsModalOpen(true);
-  };
-
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Sei sicuro di voler eliminare questo piatto?')) {
-      try {
-        await deleteDish(id);
-      } catch (error) {
-        console.error('Errore nell\'eliminare il piatto:', error);
-        alert('Errore nell\'eliminare il piatto');
-      }
-    }
-  };
-
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      description: '',
-      price: '',
-      category: 'antipasti',
-      allergens: [],
-      tags: [],
-      image_url: '',
-      available: true,
-      limited_quantity: false
-    });
-    setPricingType('fixed');
-    setEditingDish(null);
-  };
-
-  const handleAllergenToggle = (allergen: string) => {
-    setFormData(prev => ({
-      ...prev,
-      allergens: prev.allergens.includes(allergen)
-        ? prev.allergens.filter(a => a !== allergen)
-        : [...prev.allergens, allergen]
-    }));
-  };
-
-  const handleTagChange = (value: string) => {
-    const tags = value.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
-    setFormData(prev => ({ ...prev, tags }));
-  };
-
-  // Render principale del componente
   return (
     <div className="p-6">
       <div className="mb-6 text-center">
-        <h2 className="text-2xl font-bold text-gray-800">Gestione Piatti</h2>
-        <p className="text-gray-600 mt-2">Gestisci il menu del ristorante - {dishes.length} piatti totali</p>
+        <h2 className="text-2xl font-bold text-gray-800 flex items-center justify-center">
+          <Package className="w-6 h-6 mr-2" />
+          Gestione Ordini
+        </h2>
+        <p className="text-gray-600 mt-2">
+          Visualizza e gestisci tutti gli ordini ricevuti ({filteredOrders.length} ordini)
+        </p>
         <div className="mt-4">
-          <Button
-            onClick={() => {
-              resetForm();
-              setIsModalOpen(true);
-            }}
-            className="inline-flex items-center gap-2 mx-auto"
+          <button
+            onClick={fetchOrders}
+            className="px-4 py-2 bg-mediterranean-marroncino text-white rounded-lg hover:bg-opacity-90 transition-colors mx-auto"
           >
-            <Plus className="w-4 h-4" />
-            Aggiungi Piatto
-          </Button>
+            Aggiorna
+          </button>
         </div>
       </div>
 
-      {/* Lista piatti */}
-      {dishes.length === 0 ? (
-        <div className="text-center py-12 bg-gray-50 rounded-lg">
-          <div className="text-gray-400 mb-4">
-            <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-            </svg>
+      {/* Filters */}
+      <div className="mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <input
+              type="text"
+              placeholder="Cerca per numero ordine, nome, email o telefono..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mediterranean-marroncino focus:border-transparent"
+            />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Nessun piatto trovato</h3>
-          <p className="text-gray-600 mb-4">
-            Inizia aggiungendo il primo piatto al menu del ristorante.
-          </p>
-          <Button
-            onClick={() => {
-              resetForm();
-              setIsModalOpen(true);
-            }}
-            className="inline-flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Aggiungi il primo piatto
-          </Button>
+
+          {/* Status Filter */}
+          <div className="relative">
+            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mediterranean-marroncino focus:border-transparent appearance-none"
+            >
+              <option value="all">Tutti gli stati</option>
+              <option value="received">Ricevuto</option>
+              <option value="preparing">In Preparazione</option>
+              <option value="ready">Pronto</option>
+              <option value="completed">Completato</option>
+              <option value="cancelled">Annullato</option>
+            </select>
+          </div>
+
+          {/* Payment Filter */}
+          <div className="relative">
+            <CreditCard className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <select
+              value={paymentFilter}
+              onChange={(e) => setPaymentFilter(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mediterranean-marroncino focus:border-transparent appearance-none"
+            >
+              <option value="all">Tutti i pagamenti</option>
+              <option value="paid">Pagato</option>
+              <option value="pending">In Attesa</option>
+              <option value="failed">Fallito</option>
+            </select>
+          </div>
         </div>
-      ) : (
-        <div className="grid gap-4">
-          {categories.map(category => {
-            const categoryDishes = dishes.filter(dish => dish.category === category);
-            if (categoryDishes.length === 0) return null;
 
-            return (
-              <div key={category}>
-                <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-2 place-items-stretch">
-                  {categoryDishes.map(dish => (
-                    <div key={dish.id} className="bg-white rounded-lg border p-4 hover:shadow-sm w-full">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h4 className="text-lg font-medium text-gray-900">
-                              {dish.name}
-                            </h4>
-                            <span className="text-lg font-bold text-mediterranean-marroncino">
-                              {dish.tags?.includes('by_weight')
-                                ? `€${dish.price.toFixed(2)} / 100g`
-                                : `€${dish.price.toFixed(2)}`}
-                            </span>
-                            {!dish.available && (
-                              <span className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full">
-                                Non disponibile
-                              </span>
-                            )}
-                            {dish.limited_quantity && (
-                              <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full">
-                                Quantità limitata
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-gray-600 mb-3">{dish.description}</p>
+        {/* Day carousel under payment filter */}
+        <div className="mt-4">
+          <div className="flex items-center gap-2 justify-center">
+            <button
+              onClick={() => setSelectedDate(addDays(selectedDate, -1))}
+              className="p-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50"
+              aria-label="Giorno precedente"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <div className="flex justify-center">
+              <div className="flex items-center gap-2">
+                {[-3, -2, -1, 0, 1, 2, 3].map(offset => {
+                  const d = addDays(selectedDate, offset);
+                  const isSelected = isSameYMD(d, selectedDate);
+                  const label = isToday(d)
+                    ? 'Oggi'
+                    : isYesterday(d)
+                      ? 'Ieri'
+                      : isTomorrow(d)
+                        ? 'Domani'
+                        : d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' });
+                  return (
+                    <button
+                      key={offset}
+                      onClick={() => setSelectedDate(d)}
+                      className={`${isSelected ? 'bg-mediterranean-marroncino text-white' : 'bg-white text-gray-700'} px-3 py-2 rounded-full border ${isSelected ? 'border-mediterranean-marroncino' : 'border-gray-300'} hover:bg-opacity-90 whitespace-nowrap`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <button
+              onClick={() => setSelectedDate(addDays(selectedDate, 1))}
+              className="p-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50"
+              aria-label="Giorno successivo"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="mt-2 text-sm text-gray-600">
+            Visualizzati gli ordini per il giorno di ritiro selezionato.
+          </div>
+        </div>
+      </div>
 
-                          {dish.allergens && dish.allergens.length > 0 && (
-                            <div className="mb-2">
-                              <span className="text-sm font-medium text-gray-700">Allergeni: </span>
-                              <span className="text-sm text-gray-600">
-                                {dish.allergens.join(', ')}
-                              </span>
-                            </div>
-                          )}
+      {/* Orders List */}
+      <div
+        className="space-y-4 w-full max-w-full overflow-x-hidden"
+        onClick={() => {
+          if (expandedOrder) setExpandedOrder(null);
+        }}
+      >
+        {filteredOrders.length === 0 ? (
+          <div className="text-center py-12">
+            <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Nessun ordine trovato</h3>
+            <p className="text-gray-500">
+              {orders.length === 0 
+                ? 'Non ci sono ancora ordini nel sistema.' 
+                : 'Nessun ordine corrisponde ai filtri selezionati.'
+              }
+            </p>
+          </div>
+        ) : (
+          filteredOrders.map((order) => (
+            <div
+              key={order.id}
+              className="bg-mediterranean-marroncino/10 rounded-lg border border-mediterranean-marroncino overflow-hidden w-full max-w-full break-words"
+              onClick={(e) => {
+                // Evita che il click sul contenuto chiuda il pannello
+                e.stopPropagation();
+              }}
+            >
+              {/* Order Header */}
+              <div
+                className="p-3 sm:p-4 border-b border-gray-100 cursor-pointer"
+                role="button"
+                tabIndex={0}
+                onClick={() => setExpandedOrder(expandedOrder === order.id ? null : order.id)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setExpandedOrder(expandedOrder === order.id ? null : order.id);
+                  }
+                }}
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0">
+                    <div>
+                      <h3 className="font-semibold text-lg text-mediterranean-blu-scuro break-words">
+                        Ordine #{order.order_number}
+                      </h3>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.order_status)}`}>
+                        {getStatusText(order.order_status)}
+                      </span>
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${getPaymentStatusColor(order.payment_status)}`}>
+                        {getAdminPaymentLabel(order)}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
+                    {/* Pickup time badge next to total price */}
+                    <span className="px-2 py-1 bg-gray-100 border border-gray-200 rounded text-sm font-medium text-gray-700 flex items-center">
+                      <Clock className="w-4 h-4 mr-1 text-gray-500" />
+                      {order.pickup_time || '--:--'}
+                    </span>
+                    {/* Pickup day (DD/MM) small next to time */}
+                    <span className="px-2 py-1 bg-gray-100 border border-gray-200 rounded text-xs font-medium text-gray-700 flex items-center">
+                      <Calendar className="w-3 h-3 mr-1 text-gray-500" />
+                      {order.pickup_date
+                        ? new Date(order.pickup_date).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' })
+                        : '--/--'}
+                    </span>
+                    <span className="text-lg font-bold text-mediterranean-marroncino min-w-0 break-words whitespace-normal">
+                      €{order.total_amount.toFixed(2)}
+                    </span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setExpandedOrder(expandedOrder === order.id ? null : order.id);
+                      }}
+                      className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      {expandedOrder === order.id ? (
+                        <ChevronUp className="w-5 h-5" />
+                      ) : (
+                        <ChevronDown className="w-5 h-5" />
+                      )}
+                    </button>
+                  </div>
+                </div>
 
-                          {dish.tags && dish.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-1">
-                              {dish.tags.map(tag => (
-                                <span
-                                  key={tag}
-                                  className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full"
-                                >
-                                  {tag}
-                                </span>
-                              ))}
-                            </div>
-                          )}
+                {/* Quick Info */}
+                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div className="flex items-center text-gray-600 break-words min-w-0">
+                    <User className="w-4 h-4 mr-1" />
+                    {order.customer_name}
+                  </div>
+                  <div className="flex items-center text-gray-600 break-words min-w-0">
+                    <Calendar className="w-4 h-4 mr-1" />
+                    {new Date(order.pickup_date).toLocaleDateString('it-IT')}
+                  </div>
+                  <div className="flex items-center text-gray-600 break-words min-w-0">
+                    <Clock className="w-4 h-4 mr-1" />
+                    {order.pickup_time}
+                  </div>
+                  <div className="flex items-center text-gray-600 break-words min-w-0">
+                    <CreditCard className="w-4 h-4 mr-1" />
+                    {order.payment_method === 'pickup' ? 'Alla Consegna' : 'Online'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Expanded Details with smooth slide transition */}
+              <div
+                className={`bg-gray-50 transition-all duration-300 ease-in-out overflow-hidden ${
+                  expandedOrder === order.id
+                    ? 'max-h-[1200px] opacity-100 translate-y-0 p-3 sm:p-4'
+                    : 'max-h-0 opacity-0 -translate-y-1 p-0'
+                }`}
+                aria-hidden={expandedOrder !== order.id}
+              >
+                <div className={`grid grid-cols-1 lg:grid-cols-2 gap-6 ${expandedOrder === order.id ? '' : 'pointer-events-none'}`}>
+                    {/* Customer Details */}
+                    <div>
+                      <h4 className="font-medium text-mediterranean-blu-scuro mb-3">Dettagli Cliente</h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center">
+                          <User className="w-4 h-4 mr-2 text-gray-400" />
+                          <span className="font-medium">Nome:</span>
+                          <span className="ml-2">{order.customer_name}</span>
                         </div>
+                        <div className="flex items-center">
+                          <Mail className="w-4 h-4 mr-2 text-gray-400" />
+                          <span className="font-medium">Email:</span>
+                          <span className="ml-2">{order.customer_email}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <Phone className="w-4 h-4 mr-2 text-gray-400" />
+                          <span className="font-medium">Telefono:</span>
+                          <span className="ml-2">{order.customer_phone}</span>
+                        </div>
+                      </div>
 
-                        {dish.image_url && (
-                          <div className="ml-4 flex-shrink-0">
-                            <img
-                              src={dish.image_url}
-                              alt={dish.name}
-                              className="w-20 h-20 object-cover rounded-lg"
-                            />
+                      {/* Created at placed beneath customer details */}
+                      <div className="mt-3 text-sm text-gray-700">
+                        <span className="font-medium">Effettuato:</span>{' '}
+                        {new Date(order.created_at).toLocaleDateString('it-IT', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                        })}
+                        {', '}
+                        {new Date(order.created_at).toLocaleTimeString('it-IT', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </div>
+
+                      {/* Status Management */}
+                      <div className="mt-4">
+                        <h4 className="font-medium text-mediterranean-blu-scuro mb-2">Gestione Stato</h4>
+                        <select
+                          value={order.order_status}
+                          onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mediterranean-marroncino focus:border-transparent text-sm"
+                        >
+                          <option value="received">Ricevuto</option>
+                          <option value="preparing">In Preparazione</option>
+                          <option value="ready">Pronto</option>
+                          <option value="completed">Completato</option>
+                          <option value="cancelled">Annullato</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Order Items */}
+                    <div>
+                      <h4 className="font-medium text-mediterranean-blu-scuro mb-3">Piatti Ordinati</h4>
+                      <div className="space-y-2">
+                        {(Array.isArray(order.order_items) ? order.order_items : []).map((item) => (
+                          <div key={item.id} className="flex flex-wrap justify-between items-center gap-2 py-2 px-3 bg-white rounded border">
+                            <div className="min-w-0">
+                              <span className="font-medium text-mediterranean-blu-scuro block whitespace-normal break-words">
+                                {item.dish_name}
+                              </span>
+                              <span className="text-gray-500 block">
+                                x{Number(item.quantity || 0)} (€{Number(item.dish_price || 0).toFixed(2)} cad.)
+                              </span>
+                              {item.pricing_type === 'by_weight' && item.weight_grams ? (
+                                <span className="text-gray-500 block">
+                                  Grammatura: {Number(item.weight_grams)}g
+                                </span>
+                              ) : null}
+                            </div>
+                            <span className="font-semibold text-mediterranean-marroncino">
+                              €{Number(item.subtotal || 0).toFixed(2)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      <div className="mt-3 pt-3 border-t border-gray-200">
+                        {/* Discount Information */}
+                        {order.discount_amount && order.discount_amount > 0 && (
+                          <div className="space-y-1 mb-3">
+                            <div className="flex justify-between items-center text-sm">
+                              <span>Subtotale:</span>
+                              <span>€{Number(order.original_amount ?? order.total_amount ?? 0).toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-sm text-green-600">
+                              <span>
+                                Sconto {order.discount_type === 'first_order' ? '(Primo Ordine)' : '(Ordine >40€)'} 
+                                {order.discount_percentage && ` - ${order.discount_percentage}%`}:
+                              </span>
+                              <span>-€{order.discount_amount.toFixed(2)}</span>
+                            </div>
+                          </div>
+                        )}
+                        <div className="flex flex-wrap justify-between items-center font-bold text-lg gap-2">
+                          <span>Totale:</span>
+                          <span className="text-mediterranean-marroncino min-w-0 break-words whitespace-normal text-right">€{Number(order.total_amount ?? 0).toFixed(2)}</span>
+                        </div>
+                        {order.discount_amount && order.discount_amount > 0 && (
+                          <div className="text-right text-sm text-green-600 mt-1">
+                            Risparmio: €{order.discount_amount.toFixed(2)}
                           </div>
                         )}
                       </div>
 
-                      <div className="flex justify-end gap-2 mt-4">
-                        <button
-                          onClick={() => handleEdit(dish)}
-                          className="flex items-center gap-1 px-3 py-1 text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                          Modifica
-                        </button>
-                        <button
-                          onClick={() => handleDelete(dish.id)}
-                          className="flex items-center gap-1 px-3 py-1 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          Elimina
-                        </button>
-                      </div>
+                      {/* Notes */}
+                      {order.notes && (
+                        <div className="mt-4">
+                          <h4 className="font-medium text-mediterranean-blu-scuro mb-2">Note</h4>
+                          <p className="text-sm text-gray-600 bg-white p-3 rounded border">
+                            {order.notes}
+                          </p>
+                        </div>
+                      )}
                     </div>
-                  ))}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Modal per Aggiungere/Modificare Piatto */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <h3 className="text-xl font-bold mb-4">
-              {editingDish ? 'Modifica Piatto' : 'Aggiungi Nuovo Piatto'}
-            </h3>
-            
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nome Piatto *
-                </label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Descrizione *
-                </label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  rows={3}
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Tipologia prezzo *
-                  </label>
-                  <select
-                    value={pricingType}
-                    onChange={(e) => setPricingType(e.target.value as 'fixed' | 'by_weight')}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-                    required
-                  >
-                    <option value="fixed">A prezzo</option>
-                    <option value="by_weight">A peso (€/100g)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {pricingType === 'by_weight' ? 'Prezzo per 100g (€) *' : 'Prezzo (€) *'}
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.price}
-                    onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-                    required
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    {pricingType === 'by_weight'
-                      ? 'Inserisci il prezzo riferito a 100g (es. 10.00 = 10€/100g)'
-                      : 'Inserisci il prezzo fisso del piatto (es. 12.00)'}
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Categoria *
-                  </label>
-                  <select
-                    value={formData.category}
-                    onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value as any }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-                    required
-                  >
-                    {categories.map(cat => (
-                      <option key={cat} value={cat}>
-                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  URL Immagine
-                </label>
-                <input
-                  type="text"
-                  value={formData.image_url}
-                  onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  placeholder="/images/nome-file.jpg o https://..."
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Allergeni
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {commonAllergens.map(allergen => (
-                    <label key={allergen} className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={formData.allergens.includes(allergen)}
-                        onChange={() => handleAllergenToggle(allergen)}
-                        className="mr-2"
-                      />
-                      <span className="text-sm">{allergen}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Tag (separati da virgola)
-                </label>
-                <input
-                  type="text"
-                  value={formData.tags.join(', ')}
-                  onChange={(e) => handleTagChange(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  placeholder="es: vegetariano, piccante, stagionale"
-                />
-              </div>
-
-              <div className="flex gap-4">
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={formData.available}
-                    onChange={(e) => setFormData(prev => ({ ...prev, available: e.target.checked }))}
-                    className="mr-2"
-                  />
-                  <span className="text-sm">Disponibile</span>
-                </label>
-
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={formData.limited_quantity}
-                    onChange={(e) => setFormData(prev => ({ ...prev, limited_quantity: e.target.checked }))}
-                    className="mr-2"
-                  />
-                  <span className="text-sm">Quantità limitata</span>
-                </label>
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsModalOpen(false);
-                    resetForm();
-                  }}
-                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
-                >
-                  Annulla
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700"
-                >
-                  {editingDish ? 'Aggiorna' : 'Aggiungi'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 };
 
-export default DishManagement;
+export default OrdersManagement;

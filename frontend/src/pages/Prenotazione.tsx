@@ -130,6 +130,13 @@ const Prenotazione: React.FC = () => {
     }
   }, [location.state]);
 
+  // Porta l'utente all'inizio pagina quando l'ordine è confermato
+  useEffect(() => {
+    if (orderConfirmed) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [orderConfirmed]);
+
   // Available pickup time slots based on opening hours
   // Martedì-Sabato: 11:00-15:30, 17:00-22:00
   // Domenica: Chiuso (non si accettano ordini)
@@ -774,39 +781,49 @@ const Prenotazione: React.FC = () => {
                 <>
                   <div className="space-y-4 mb-6">
                     {items.map(item => (
-                      <div key={`${item.id}-${item.weight_grams ?? 'fixed'}`} className="flex items-center justify-between p-3 bg-mediterranean-beige rounded-lg gap-3 flex-wrap overflow-hidden">
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-medium text-mediterranean-blu-scuro break-words">
+                      <div
+                        key={`${item.id}-${item.weight_grams ?? 'fixed'}`}
+                        className="p-3 bg-mediterranean-marroncino/10 border border-mediterranean-marroncino/20 rounded-lg overflow-hidden"
+                      >
+                        {/* Header: titolo a sinistra, prezzo a destra */}
+                        <div className="flex items-start justify-between gap-3">
+                          <h4 className="font-medium text-mediterranean-blu-scuro break-words flex-1 min-w-0">
                             {item.name}
                             {item.pricing_type === 'by_weight' && item.weight_grams ? (
                               <span className="ml-2 text-sm text-mediterranean-blu-scuro opacity-75">({item.weight_grams}g)</span>
                             ) : null}
                           </h4>
-                          <p className="text-mediterranean-marroncino font-semibold">€{Number(item.price).toFixed(2)}</p>
+                          <p className="text-mediterranean-marroncino font-semibold shrink-0">
+                            €{Number(item.price).toFixed(2)}
+                          </p>
                         </div>
 
-                        <div className="flex items-center space-x-2 shrink-0">
-                          <button
-                            onClick={() => updateQuantity(item.id, item.quantity - 1, item.weight_grams)}
-                            className="w-8 h-8 rounded-full bg-mediterranean-bianco flex items-center justify-center text-mediterranean-blu-scuro hover:bg-mediterranean-marroncino hover:text-mediterranean-bianco transition-colors"
-                          >
-                            <Minus className="w-4 h-4" />
-                          </button>
+                        {/* Footer: controlli - qty + e cestino */}
+                        <div className="mt-3 flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => updateQuantity(item.id, item.quantity - 1, item.weight_grams)}
+                              className="w-8 h-8 rounded-full bg-mediterranean-bianco flex items-center justify-center text-mediterranean-blu-scuro hover:bg-mediterranean-marroncino hover:text-mediterranean-bianco transition-colors"
+                            >
+                              <Minus className="w-4 h-4" />
+                            </button>
 
-                          <span className="w-8 text-center font-medium text-mediterranean-blu-scuro">
-                            {item.quantity}
-                          </span>
+                            <span className="w-8 text-center font-medium text-mediterranean-blu-scuro">
+                              {item.quantity}
+                            </span>
 
-                          <button
-                            onClick={() => updateQuantity(item.id, item.quantity + 1, item.weight_grams)}
-                            className="w-8 h-8 rounded-full bg-mediterranean-bianco flex items-center justify-center text-mediterranean-blu-scuro hover:bg-mediterranean-marroncino hover:text-mediterranean-bianco transition-colors"
-                          >
-                            <Plus className="w-4 h-4" />
-                          </button>
+                            <button
+                              onClick={() => updateQuantity(item.id, item.quantity + 1, item.weight_grams)}
+                              className="w-8 h-8 rounded-full bg-mediterranean-bianco flex items-center justify-center text-mediterranean-blu-scuro hover:bg-mediterranean-marroncino hover:text-mediterranean-bianco transition-colors"
+                            >
+                              <Plus className="w-4 h-4" />
+                            </button>
+                          </div>
 
                           <button
                             onClick={() => removeItem(item.id, item.weight_grams)}
-                            className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-600 hover:bg-red-200 transition-colors ml-2"
+                            className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-600 hover:bg-red-200 transition-colors"
+                            aria-label="Rimuovi dal carrello"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -1288,5 +1305,4 @@ const Prenotazione: React.FC = () => {
 };
 
 export default Prenotazione;
-
 

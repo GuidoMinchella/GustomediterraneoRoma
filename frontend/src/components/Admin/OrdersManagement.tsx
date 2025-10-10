@@ -278,26 +278,26 @@ const OrdersManagement: React.FC = () => {
 
   return (
     <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-800 flex items-center">
-            <Package className="w-6 h-6 mr-2" />
-            Gestione Ordini
-          </h2>
-          <p className="text-gray-600 mt-1">
-            Visualizza e gestisci tutti gli ordini ricevuti ({filteredOrders.length} ordini)
-          </p>
+      <div className="mb-6 text-center">
+        <h2 className="text-2xl font-bold text-gray-800 flex items-center justify-center">
+          <Package className="w-6 h-6 mr-2" />
+          Gestione Ordini
+        </h2>
+        <p className="text-gray-600 mt-2">
+          Visualizza e gestisci tutti gli ordini ricevuti ({filteredOrders.length} ordini)
+        </p>
+        <div className="mt-4">
+          <button
+            onClick={fetchOrders}
+            className="px-4 py-2 bg-mediterranean-marroncino text-white rounded-lg hover:bg-opacity-90 transition-colors mx-auto"
+          >
+            Aggiorna
+          </button>
         </div>
-        <button
-          onClick={fetchOrders}
-          className="px-4 py-2 bg-mediterranean-marroncino text-white rounded-lg hover:bg-opacity-90 transition-colors"
-        >
-          Aggiorna
-        </button>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+      <div className="mb-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Search */}
           <div className="relative">
@@ -347,7 +347,7 @@ const OrdersManagement: React.FC = () => {
 
       {/* Orders List */}
       <div
-        className="space-y-4 w-full max-w-full overflow-x-hidden bg-mediterranean-marroncino/20 p-4 rounded-lg"
+        className="space-y-4 w-full max-w-full overflow-x-hidden"
         onClick={() => {
           if (expandedOrder) setExpandedOrder(null);
         }}
@@ -367,7 +367,7 @@ const OrdersManagement: React.FC = () => {
           filteredOrders.map((order) => (
             <div
               key={order.id}
-              className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden w-full max-w-full"
+              className="bg-mediterranean-marroncino/10 rounded-lg border border-mediterranean-marroncino overflow-hidden w-full max-w-full"
               onClick={(e) => {
                 // Evita che il click sul contenuto chiuda il pannello
                 e.stopPropagation();

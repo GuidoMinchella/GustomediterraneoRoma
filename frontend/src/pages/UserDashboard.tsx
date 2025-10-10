@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { User, Clock, Package, CreditCard, Calendar, Phone, Mail, ChevronDown, ChevronUp } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -38,6 +39,7 @@ interface OrderItem {
 
 const UserDashboard: React.FC = () => {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
@@ -224,7 +226,7 @@ const UserDashboard: React.FC = () => {
                 
                 <div className="pt-4 border-t">
                   <Button
-                    onClick={() => signOut()}
+                    onClick={async () => { await signOut(); navigate('/'); }}
                     variant="outline"
                     size="sm"
                     className="w-full"
@@ -238,7 +240,7 @@ const UserDashboard: React.FC = () => {
 
           {/* Order History */}
           <div className="lg:col-span-2">
-            <Card>
+            <div className="lg:p-6 lg:bg-mediterranean-bianco lg:rounded-xl lg:shadow-sm">
               <h3 className="font-serif text-xl font-semibold text-mediterranean-blu-scuro mb-6 flex items-center">
                 <Package className="w-5 h-5 mr-2" />
                 Cronologia Ordini ({orders.length})
@@ -261,24 +263,24 @@ const UserDashboard: React.FC = () => {
                   </Button>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {orders.map((order) => (
                     <div
                       key={order.id}
-                      className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                      className="w-full border border-gray-200 bg-white rounded-xl p-4 hover:shadow-md transition-shadow min-w-0"
                     >
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center space-x-3">
+                      <div className="flex items-center justify-between mb-3 gap-2">
+                        <div className="flex items-center space-x-3 min-w-0">
                           <h4 className="font-semibold text-mediterranean-blu-scuro">
                             Ordine #{order.order_number}
                           </h4>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.order_status)}`}>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.order_status)} shrink-0`}>
                             {getStatusText(order.order_status)}
                           </span>
                         </div>
                         <button
                           onClick={() => setExpandedOrder(expandedOrder === order.id ? null : order.id)}
-                          className="text-mediterranean-marroncino hover:text-mediterranean-blu-scuro"
+                          className="text-mediterranean-marroncino hover:text-mediterranean-blu-scuro shrink-0"
                         >
                           {expandedOrder === order.id ? (
                             <ChevronUp className="w-5 h-5" />
@@ -288,7 +290,7 @@ const UserDashboard: React.FC = () => {
                         </button>
                       </div>
 
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
                         <div>
                           <span className="text-mediterranean-blu-scuro opacity-75">Data:</span>
                           <p className="font-medium text-mediterranean-blu-scuro">
@@ -390,7 +392,7 @@ const UserDashboard: React.FC = () => {
                   ))}
                 </div>
               )}
-            </Card>
+            </div>
           </div>
         </div>
       </div>

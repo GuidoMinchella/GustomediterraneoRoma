@@ -73,20 +73,18 @@ const MenuDelGiornoManagement: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Menu del Giorno</h2>
-          <p className="text-gray-600 mt-1">
-            Gestisci i piatti disponibili nel menu del giorno
-          </p>
+      <div className="text-center">
+        <h2 className="text-2xl font-bold text-gray-900">Menu del Giorno</h2>
+        <p className="text-gray-600 mt-2">Gestisci i piatti disponibili nel menu del giorno</p>
+        <div className="mt-4">
+          <Button
+            onClick={() => setShowAddModal(true)}
+            className="inline-flex items-center space-x-2 mx-auto"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Aggiungi Piatto</span>
+          </Button>
         </div>
-        <Button
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center space-x-2"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Aggiungi Piatto</span>
-        </Button>
       </div>
 
       {/* Lista piatti */}

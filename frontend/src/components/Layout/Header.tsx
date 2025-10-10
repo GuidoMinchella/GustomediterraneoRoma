@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, ShoppingCart, User, LogOut } from 'lucide-react';
+import { Menu, X, ShoppingCart, User, LogOut, Home, ChefHat, Calendar, Image as ImageIcon, Phone as PhoneIcon } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import LoginModal from '../Auth/LoginModal';
@@ -146,59 +146,86 @@ const Header: React.FC = () => {
           </div>
         </div>
 
+        {/* Overlay per chiusura clic fuori dal menu su mobile */}
+        {isMenuOpen && (
+          <div
+            className="md:hidden fixed inset-0 top-16 z-40 bg-black/0"
+            onClick={() => setIsMenuOpen(false)}
+            aria-hidden="true"
+          />
+        )}
+
         {/* Mobile Navigation */}
-        <div className={`md:hidden ${isMenuOpen ? 'dropdown-anim open' : 'dropdown-anim'}`} aria-hidden={!isMenuOpen}>
-          <div className="px-2 pt-2 pb-3 space-y-1 bg-mediterranean-beige rounded-lg mt-2">
-              {navItems.map((item) => (
+        <div
+          className={`md:hidden ${isMenuOpen ? 'dropdown-anim open' : 'dropdown-anim'} fixed top-16 left-0 right-0 z-50`}
+          aria-hidden={!isMenuOpen}
+          onClick={() => setIsMenuOpen(false)}
+        >
+          <div
+            className="ml-auto w-[68%] sm:max-w-[340px] max-w-[300px] px-2 pt-2 pb-2 space-y-1 bg-mediterranean-marroncino text-white rounded-lg max-h-[60vh] overflow-y-auto animate-slide-in-down shadow-2xl border border-white/20"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {navItems.map((item, i) => {
+              const icon = (
+                item.path === '/' ? <Home className="w-4 h-4 mr-2" /> :
+                item.path === '/menu-fisso' ? <ChefHat className="w-4 h-4 mr-2" /> :
+                item.path === '/menu-del-giorno' ? <Calendar className="w-4 h-4 mr-2" /> :
+                item.path === '/prenota' ? <Calendar className="w-4 h-4 mr-2" /> :
+                item.path === '/galleria' ? <ImageIcon className="w-4 h-4 mr-2" /> :
+                item.path === '/contatti' ? <PhoneIcon className="w-4 h-4 mr-2" /> : null
+              );
+              return (
                 <Link
                   key={item.path}
                   to={item.path}
                   onClick={() => setIsMenuOpen(false)}
-                  className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                    isActive(item.path)
-                      ? 'text-mediterranean-marroncino bg-mediterranean-bianco'
-                      : 'text-mediterranean-blu-scuro hover:text-mediterranean-marroncino hover:bg-mediterranean-bianco'
+                  className={`block px-3 py-2 rounded-md text-base font-medium transition-colors fade-slide-in text-white hover:text-white/90 ${
+                    isActive(item.path) ? '' : ''
                   }`}
+                  style={{ animationDelay: `${i * 60}ms` }}
                 >
-                  {item.label}
+                  <span className="flex items-center">{icon}{item.label}</span>
                 </Link>
-              ))}
-              
-              {/* Mobile Authentication */}
-              <div className="border-t border-mediterranean-marroncino pt-2 mt-2">
-                {user ? (
-                  <div className="px-3 py-2 space-y-2">
-                    <Link
-                      to="/dashboard"
-                      onClick={() => setIsMenuOpen(false)}
-                      className="flex items-center text-mediterranean-blu-scuro hover:text-mediterranean-marroncino transition-colors"
-                    >
-                      <User className="w-4 h-4 mr-2" />
-                      Dashboard
-                    </Link>
-                    <button
-                      onClick={handleSignOut}
-                      className="flex items-center text-mediterranean-blu-scuro hover:text-mediterranean-marroncino transition-colors"
-                    >
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Esci
-                    </button>
-                  </div>
-                ) : (
-                  <div className="px-3 py-2">
-                    <Button
-                      onClick={() => {
-                        setIsLoginModalOpen(true);
-                        setIsMenuOpen(false);
-                      }}
-                      size="sm"
-                      className="w-full"
-                    >
-                      Accedi
-                    </Button>
-                  </div>
-                )}
-              </div>
+              );
+            })}
+
+            {/* Mobile Authentication */}
+            <div className="border-t border-white/20 pt-2 mt-2">
+              {user ? (
+                <div className="px-3 py-2 space-y-2">
+                  <Link
+                    to="/dashboard"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center text-white hover:text-white/90 transition-colors fade-slide-in"
+                    style={{ animationDelay: `${navItems.length * 60}ms` }}
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    Dashboard
+                  </Link>
+                  <button
+                    onClick={handleSignOut}
+                    className="flex items-center text-white hover:text-white/90 transition-colors fade-slide-in"
+                    style={{ animationDelay: `${navItems.length * 60 + 60}ms` }}
+                  >
+                    Esci
+                  </button>
+                </div>
+              ) : (
+                <div className="px-3 py-2">
+                  <Button
+                    onClick={() => {
+                      setIsLoginModalOpen(true);
+                      setIsMenuOpen(false);
+                    }}
+                    size="sm"
+                    className="w-full fade-slide-in"
+                    style={{ animationDelay: `${navItems.length * 60}ms` }}
+                  >
+                    Accedi
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

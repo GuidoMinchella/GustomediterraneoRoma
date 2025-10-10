@@ -551,11 +551,11 @@ const MenuFisso: React.FC = () => {
                           )}
 
                           <div className="flex-1 p-4">
-                            <div className="flex justify-between items-start mb-2">
-                              <h3 className="font-serif text-lg font-semibold text-mediterranean-blu-scuro">
+                            <div className="flex justify-between items-start mb-2 gap-2">
+                              <h3 className="font-serif text-lg font-semibold text-mediterranean-blu-scuro flex-1 min-w-0 break-words">
                               {dish.name}
                               </h3>
-                              <span className="text-lg font-bold text-mediterranean-marroncino ml-4">
+                              <span className="text-lg font-bold text-mediterranean-marroncino ml-4 shrink-0">
                                 {(dish.pricing_type === 'by_weight' || dish.tags?.includes('by_weight'))
                                   ? `${formatPrice(dish.price)} / 100g`
                                   : `${formatPrice(dish.price)}`}
@@ -612,7 +612,7 @@ const MenuFisso: React.FC = () => {
                             {/* Sezione peso (spostata sotto descrizione e tag, ingrandita) */}
                             {(dish.pricing_type === 'by_weight' || dish.tags?.includes('by_weight')) && (
                               <div className="mb-4 p-3 bg-mediterranean-beige/50 border border-mediterranean-marroncino/30 rounded-lg">
-                                <div className="flex items-center justify-between gap-3">
+                                <div className="flex flex-wrap items-center justify-between gap-3">
                                   <div className="flex items-center gap-3">
                                     <button
                                       type="button"
@@ -640,7 +640,7 @@ const MenuFisso: React.FC = () => {
                                       +
                                     </button>
                                   </div>
-                                  <span className="ml-2 text-mediterranean-marroncino font-bold text-lg sm:text-xl">
+                                  <span className="ml-2 text-mediterranean-marroncino font-bold text-lg sm:text-xl break-words">
                                     Totale: {formatPrice((dish.price || 0) * ((weights[dish.id] ?? 100) / 100))}
                                   </span>
                                 </div>

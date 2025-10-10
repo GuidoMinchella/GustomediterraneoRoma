@@ -1,4 +1,4 @@
-import { stripe, cors, handleOptions, getOrCreateCustomerByEmail } from '../lib/_utils.js';
+import { stripe, cors, handleOptions, getOrCreateCustomerByEmail, parseJsonBody } from '../lib/_utils.js';
 
 export default async function handler(req, res) {
   cors(req, res);
@@ -9,7 +9,8 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { order } = req.body || {};
+    const body = await parseJsonBody(req);
+    const { order } = body || {};
     if (!order || !order.items || !Array.isArray(order.items)) {
       return res.status(400).json({ error: 'Invalid order payload: missing items array' });
     }

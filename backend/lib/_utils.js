@@ -34,6 +34,22 @@ export function handleOptions(req, res) {
   return false;
 }
 
+export async function parseJsonBody(req) {
+  if (req.body && typeof req.body === 'object') return req.body;
+  return new Promise((resolve, reject) => {
+    let data = '';
+    req.on('data', (chunk) => { data += chunk; });
+    req.on('end', () => {
+      try {
+        resolve(data ? JSON.parse(data) : {});
+      } catch (e) {
+        reject(e);
+      }
+    });
+    req.on('error', reject);
+  });
+}
+
 export async function getOrCreateCustomerByEmail(email, name, userId) {
   if (!email) return null;
   const normalizedEmail = String(email).trim().toLowerCase();

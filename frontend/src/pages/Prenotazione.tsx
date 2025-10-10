@@ -544,15 +544,15 @@ const Prenotazione: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 <div>
                   <h4 className="font-semibold text-mediterranean-blu-scuro mb-2">Nome:</h4>
-                  <p className="text-mediterranean-blu-scuro">{redirectOrderSummary?.customer_name || formData.name}</p>
+                  <p className="text-mediterranean-blu-scuro break-words">{redirectOrderSummary?.customer_name || formData.name}</p>
                 </div>
                 <div>
                   <h4 className="font-semibold text-mediterranean-blu-scuro mb-2">Email:</h4>
-                  <p className="text-mediterranean-blu-scuro">{redirectOrderSummary?.customer_email || formData.email}</p>
+                  <p className="text-mediterranean-blu-scuro break-words">{redirectOrderSummary?.customer_email || formData.email}</p>
                 </div>
                 <div>
                   <h4 className="font-semibold text-mediterranean-blu-scuro mb-2">Telefono:</h4>
-                  <p className="text-mediterranean-blu-scuro">{redirectOrderSummary?.customer_phone || formData.phone}</p>
+                  <p className="text-mediterranean-blu-scuro break-words">{redirectOrderSummary?.customer_phone || formData.phone}</p>
                 </div>
               </div>
 
@@ -568,15 +568,15 @@ const Prenotazione: React.FC = () => {
               <div className="border-t pt-4 mb-4">
                 <h4 className="font-semibold text-mediterranean-blu-scuro mb-2">Piatti Ordinati:</h4>
                 {(redirectOrderSummary?.items || items).map((item: any, idx: number) => (
-                  <div key={idx} className="flex justify-between items-center py-2">
-                    <span>
+                  <div key={idx} className="flex flex-wrap justify-between items-center py-2">
+                    <span className="flex-1 min-w-0 break-words pr-2">
                       {item.name}
                       {item.pricing_type === 'by_weight' && item.weight_grams ? (
                         <span className="ml-2 text-sm text-mediterranean-blu-scuro opacity-75">({item.weight_grams}g)</span>
                       ) : null}
                       {' '}x{item.quantity}
                     </span>
-                    <span className="font-semibold">€{(item.subtotal ?? (item.price * item.quantity)).toFixed(2)}</span>
+                    <span className="font-semibold shrink-0">€{(item.subtotal ?? (item.price * item.quantity)).toFixed(2)}</span>
                   </div>
                 ))}
               </div>
@@ -618,7 +618,7 @@ const Prenotazione: React.FC = () => {
               {formData.notes && (
                 <div className="border-t pt-4 mb-4">
                   <h4 className="font-semibold text-mediterranean-blu-scuro mb-2">Note:</h4>
-                  <p className="text-mediterranean-blu-scuro">{formData.notes}</p>
+                  <p className="text-mediterranean-blu-scuro break-words whitespace-pre-wrap">{formData.notes}</p>
                 </div>
               )}
             </div>
@@ -774,9 +774,9 @@ const Prenotazione: React.FC = () => {
                 <>
                   <div className="space-y-4 mb-6">
                     {items.map(item => (
-                      <div key={`${item.id}-${item.weight_grams ?? 'fixed'}`} className="flex items-center justify-between p-3 bg-mediterranean-beige rounded-lg">
-                        <div className="flex-1">
-                          <h4 className="font-medium text-mediterranean-blu-scuro">
+                      <div key={`${item.id}-${item.weight_grams ?? 'fixed'}`} className="flex items-center justify-between p-3 bg-mediterranean-beige rounded-lg gap-3 flex-wrap overflow-hidden">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-mediterranean-blu-scuro break-words">
                             {item.name}
                             {item.pricing_type === 'by_weight' && item.weight_grams ? (
                               <span className="ml-2 text-sm text-mediterranean-blu-scuro opacity-75">({item.weight_grams}g)</span>
@@ -785,7 +785,7 @@ const Prenotazione: React.FC = () => {
                           <p className="text-mediterranean-marroncino font-semibold">€{Number(item.price).toFixed(2)}</p>
                         </div>
 
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-2 shrink-0">
                           <button
                             onClick={() => updateQuantity(item.id, item.quantity - 1, item.weight_grams)}
                             className="w-8 h-8 rounded-full bg-mediterranean-bianco flex items-center justify-center text-mediterranean-blu-scuro hover:bg-mediterranean-marroncino hover:text-mediterranean-bianco transition-colors"
@@ -1288,3 +1288,5 @@ const Prenotazione: React.FC = () => {
 };
 
 export default Prenotazione;
+
+

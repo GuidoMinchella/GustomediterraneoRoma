@@ -167,7 +167,7 @@ const AdminDashboard: React.FC = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar */}
           <div className="lg:w-64">
@@ -197,9 +197,15 @@ const AdminDashboard: React.FC = () => {
 
           {/* Main Content */}
           <div className="flex-1 max-w-full overflow-x-hidden">
-            <div className="bg-white rounded-lg shadow-sm max-w-full overflow-x-hidden">
-              {renderTabContent()}
-            </div>
+            {activeTab === 'dishes' || activeTab === 'orders' ? (
+              <div className="max-w-full overflow-x-hidden">
+                {renderTabContent()}
+              </div>
+            ) : (
+              <div className="bg-white rounded-lg shadow-sm max-w-full overflow-x-hidden">
+                {renderTabContent()}
+              </div>
+            )}
           </div>
         </div>
       </div>

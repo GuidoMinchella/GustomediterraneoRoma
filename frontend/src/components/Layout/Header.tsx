@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, ShoppingCart, User, LogOut } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
@@ -15,6 +15,7 @@ const Header: React.FC = () => {
   const location = useLocation();
   const { itemsCount } = useCart();
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
   const navItems = [
     { path: '/', label: 'Home' },
@@ -38,7 +39,12 @@ const Header: React.FC = () => {
   };
 
   const handleSignOut = async () => {
-    await signOut();
+    try {
+      await signOut();
+    } finally {
+      setIsMenuOpen(false);
+      navigate('/');
+    }
   };
 
   return (

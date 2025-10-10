@@ -170,23 +170,21 @@ const DishManagement: React.FC = () => {
   // Render principale del componente
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-800">Gestione Piatti</h2>
-          <p className="text-gray-600 mt-1">
-            Gestisci il menu del ristorante - {dishes.length} piatti totali
-          </p>
+      <div className="mb-6 text-center">
+        <h2 className="text-2xl font-bold text-gray-800">Gestione Piatti</h2>
+        <p className="text-gray-600 mt-2">Gestisci il menu del ristorante - {dishes.length} piatti totali</p>
+        <div className="mt-4">
+          <Button
+            onClick={() => {
+              resetForm();
+              setIsModalOpen(true);
+            }}
+            className="inline-flex items-center gap-2 mx-auto"
+          >
+            <Plus className="w-4 h-4" />
+            Aggiungi Piatto
+          </Button>
         </div>
-        <Button
-          onClick={() => {
-            resetForm();
-            setIsModalOpen(true);
-          }}
-          className="flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Aggiungi Piatto
-        </Button>
       </div>
 
       {/* Lista piatti */}
@@ -219,15 +217,10 @@ const DishManagement: React.FC = () => {
             if (categoryDishes.length === 0) return null;
 
             return (
-              <div key={category} className="bg-white rounded-lg shadow-sm border">
-                <div className="px-6 py-4 border-b bg-gray-50">
-                  <h3 className="text-lg font-semibold text-gray-800 capitalize">
-                    {category} ({categoryDishes.length})
-                  </h3>
-                </div>
-                <div className="divide-y">
+              <div key={category}>
+                <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-2 place-items-stretch">
                   {categoryDishes.map(dish => (
-                    <div key={dish.id} className="p-6 hover:bg-gray-50">
+                    <div key={dish.id} className="bg-white rounded-lg border p-4 hover:shadow-sm w-full">
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
@@ -251,7 +244,7 @@ const DishManagement: React.FC = () => {
                             )}
                           </div>
                           <p className="text-gray-600 mb-3">{dish.description}</p>
-                          
+
                           {dish.allergens && dish.allergens.length > 0 && (
                             <div className="mb-2">
                               <span className="text-sm font-medium text-gray-700">Allergeni: </span>
@@ -260,7 +253,7 @@ const DishManagement: React.FC = () => {
                               </span>
                             </div>
                           )}
-                          
+
                           {dish.tags && dish.tags.length > 0 && (
                             <div className="flex flex-wrap gap-1">
                               {dish.tags.map(tag => (
@@ -274,7 +267,7 @@ const DishManagement: React.FC = () => {
                             </div>
                           )}
                         </div>
-                        
+
                         {dish.image_url && (
                           <div className="ml-4 flex-shrink-0">
                             <img
@@ -285,7 +278,7 @@ const DishManagement: React.FC = () => {
                           </div>
                         )}
                       </div>
-                      
+
                       <div className="flex justify-end gap-2 mt-4">
                         <button
                           onClick={() => handleEdit(dish)}

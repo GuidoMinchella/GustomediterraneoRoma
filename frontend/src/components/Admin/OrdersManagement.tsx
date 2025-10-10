@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Package, Calendar, Clock, User, Phone, Mail, CreditCard, Eye, EyeOff, ChevronDown, ChevronUp, Search, Filter } from 'lucide-react';
+import { Package, Calendar, Clock, User, Phone, Mail, CreditCard, Eye, EyeOff, ChevronDown, ChevronUp, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Order {
   id: string;
@@ -41,6 +41,7 @@ const OrdersManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [paymentFilter, setPaymentFilter] = useState<string>('all');
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
   // Chiudi il pannello cliccando ovunque nella pagina (fuori dai card),
   // mantenendo stopPropagation sui card per evitare chiusure involontarie
@@ -240,20 +241,30 @@ const OrdersManagement: React.FC = () => {
     return getPaymentStatusText(order.payment_status);
   };
 
-  // Sort by pickup date/time ascending (closest pickup first), then filter
-  const filteredOrders = [...orders]
-    .sort((a, b) => {
-      const aDate = a.pickup_date ? new Date(a.pickup_date) : new Date(a.created_at);
-      const bDate = b.pickup_date ? new Date(b.pickup_date) : new Date(b.created_at);
-      const dateCmp = aDate.getTime() - bDate.getTime();
-      if (dateCmp !== 0) return dateCmp;
-      const [ah = '0', am = '0'] = (a.pickup_time || '').split(':');
-      const [bh = '0', bm = '0'] = (b.pickup_time || '').split(':');
-      const aMinutes = Number(ah) * 60 + Number(am);
-      const bMinutes = Number(bh) * 60 + Number(bm);
-      return aMinutes - bMinutes;
-    })
-    .filter(order => {
+  // Helpers for date filtering
+  const dateToYMD = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const da = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${da}`;
+  };
+  const addDays = (d: Date, delta: number) => {
+    const nd = new Date(d);
+    nd.setDate(nd.getDate() + delta);
+    return nd;
+  };
+  const today = new Date();
+  const isSameYMD = (d1: Date, d2: Date) => dateToYMD(d1) === dateToYMD(d2);
+  const isToday = (d: Date) => isSameYMD(d, today);
+  const isYesterday = (d: Date) => isSameYMD(d, addDays(today, -1));
+  const isTomorrow = (d: Date) => isSameYMD(d, addDays(today, 1));
+  const timeToMinutes = (t?: string) => {
+    const [h = '0', m = '0'] = (t || '').split(':');
+    return Number(h) * 60 + Number(m);
+  };
+
+  // Base filter by search/status/payment (no date yet)
+  const filteredBase = [...orders].filter(order => {
     const matchesSearch = 
       order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -265,6 +276,17 @@ const OrdersManagement: React.FC = () => {
 
     return matchesSearch && matchesStatus && matchesPayment;
   });
+
+  // Filter by selected day using pickup_date (not created_at)
+  const selectedYMD = dateToYMD(selectedDate);
+  const dayFiltered = filteredBase.filter(order => {
+    const pd = order.pickup_date ? new Date(order.pickup_date) : null;
+    if (!pd) return false;
+    return dateToYMD(pd) === selectedYMD;
+  });
+
+  // Sort for the selected day by pickup_time ascending
+  const filteredOrders = [...dayFiltered].sort((a, b) => timeToMinutes(a.pickup_time) - timeToMinutes(b.pickup_time));
 
   if (loading) {
     return (
@@ -343,6 +365,53 @@ const OrdersManagement: React.FC = () => {
             </select>
           </div>
         </div>
+
+        {/* Day carousel under payment filter */}
+        <div className="mt-4">
+          <div className="flex items-center gap-2 justify-center">
+            <button
+              onClick={() => setSelectedDate(addDays(selectedDate, -1))}
+              className="p-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50"
+              aria-label="Giorno precedente"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <div className="flex justify-center">
+              <div className="flex items-center gap-2">
+                {[-3, -2, -1, 0, 1, 2, 3].map(offset => {
+                  const d = addDays(selectedDate, offset);
+                  const isSelected = isSameYMD(d, selectedDate);
+                  const label = isToday(d)
+                    ? 'Oggi'
+                    : isYesterday(d)
+                      ? 'Ieri'
+                      : isTomorrow(d)
+                        ? 'Domani'
+                        : d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' });
+                  return (
+                    <button
+                      key={offset}
+                      onClick={() => setSelectedDate(d)}
+                      className={`${isSelected ? 'bg-mediterranean-marroncino text-white' : 'bg-white text-gray-700'} px-3 py-2 rounded-full border ${isSelected ? 'border-mediterranean-marroncino' : 'border-gray-300'} hover:bg-opacity-90 whitespace-nowrap`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <button
+              onClick={() => setSelectedDate(addDays(selectedDate, 1))}
+              className="p-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50"
+              aria-label="Giorno successivo"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="mt-2 text-sm text-gray-600">
+            Visualizzati gli ordini per il giorno di ritiro selezionato.
+          </div>
+        </div>
       </div>
 
       {/* Orders List */}
@@ -367,7 +436,7 @@ const OrdersManagement: React.FC = () => {
           filteredOrders.map((order) => (
             <div
               key={order.id}
-              className="bg-mediterranean-marroncino/10 rounded-lg border border-mediterranean-marroncino overflow-hidden w-full max-w-full"
+              className="bg-mediterranean-marroncino/10 rounded-lg border border-mediterranean-marroncino overflow-hidden w-full max-w-full break-words"
               onClick={(e) => {
                 // Evita che il click sul contenuto chiuda il pannello
                 e.stopPropagation();
@@ -392,15 +461,6 @@ const OrdersManagement: React.FC = () => {
                       <h3 className="font-semibold text-lg text-mediterranean-blu-scuro break-words">
                         Ordine #{order.order_number}
                       </h3>
-                      <p className="text-sm text-gray-600 whitespace-normal break-words">
-                        {new Date(order.created_at).toLocaleDateString('it-IT', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.order_status)}`}>
@@ -411,7 +471,7 @@ const OrdersManagement: React.FC = () => {
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between sm:justify-end space-x-2 w-full sm:w-auto">
+                  <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
                     {/* Pickup time badge next to total price */}
                     <span className="px-2 py-1 bg-gray-100 border border-gray-200 rounded text-sm font-medium text-gray-700 flex items-center">
                       <Clock className="w-4 h-4 mr-1 text-gray-500" />
@@ -424,7 +484,7 @@ const OrdersManagement: React.FC = () => {
                         ? new Date(order.pickup_date).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' })
                         : '--/--'}
                     </span>
-                    <span className="text-lg font-bold text-mediterranean-marroncino">
+                    <span className="text-lg font-bold text-mediterranean-marroncino min-w-0 break-words whitespace-normal">
                       €{order.total_amount.toFixed(2)}
                     </span>
                     <button
@@ -445,19 +505,19 @@ const OrdersManagement: React.FC = () => {
 
                 {/* Quick Info */}
                 <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div className="flex items-center text-gray-600 break-words">
+                  <div className="flex items-center text-gray-600 break-words min-w-0">
                     <User className="w-4 h-4 mr-1" />
                     {order.customer_name}
                   </div>
-                  <div className="flex items-center text-gray-600 break-words">
+                  <div className="flex items-center text-gray-600 break-words min-w-0">
                     <Calendar className="w-4 h-4 mr-1" />
                     {new Date(order.pickup_date).toLocaleDateString('it-IT')}
                   </div>
-                  <div className="flex items-center text-gray-600 break-words">
+                  <div className="flex items-center text-gray-600 break-words min-w-0">
                     <Clock className="w-4 h-4 mr-1" />
                     {order.pickup_time}
                   </div>
-                  <div className="flex items-center text-gray-600 break-words">
+                  <div className="flex items-center text-gray-600 break-words min-w-0">
                     <CreditCard className="w-4 h-4 mr-1" />
                     {order.payment_method === 'pickup' ? 'Alla Consegna' : 'Online'}
                   </div>
@@ -493,6 +553,21 @@ const OrdersManagement: React.FC = () => {
                           <span className="font-medium">Telefono:</span>
                           <span className="ml-2">{order.customer_phone}</span>
                         </div>
+                      </div>
+
+                      {/* Created at placed beneath customer details */}
+                      <div className="mt-3 text-sm text-gray-700">
+                        <span className="font-medium">Effettuato:</span>{' '}
+                        {new Date(order.created_at).toLocaleDateString('it-IT', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                        })}
+                        {', '}
+                        {new Date(order.created_at).toLocaleTimeString('it-IT', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
                       </div>
 
                       {/* Status Management */}
@@ -555,9 +630,9 @@ const OrdersManagement: React.FC = () => {
                             </div>
                           </div>
                         )}
-                        <div className="flex justify-between items-center font-bold text-lg">
+                        <div className="flex flex-wrap justify-between items-center font-bold text-lg gap-2">
                           <span>Totale:</span>
-                          <span className="text-mediterranean-marroncino">€{Number(order.total_amount ?? 0).toFixed(2)}</span>
+                          <span className="text-mediterranean-marroncino min-w-0 break-words whitespace-normal text-right">€{Number(order.total_amount ?? 0).toFixed(2)}</span>
                         </div>
                         {order.discount_amount && order.discount_amount > 0 && (
                           <div className="text-right text-sm text-green-600 mt-1">
@@ -587,3 +662,4 @@ const OrdersManagement: React.FC = () => {
 };
 
 export default OrdersManagement;
+

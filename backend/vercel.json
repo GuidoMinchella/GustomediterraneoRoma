@@ -3,15 +3,7 @@
   "version": 2,
   "functions": {
     "api/**/*.js": {
-      "runtime": "nodejs18.x"
+      "runtime": "nodejs20.x"
     }
-  },
-  "routes": [
-    { "src": "/api/ping", "dest": "api/ping.js" },
-    { "src": "/api/create-payment-intent", "dest": "api/create-payment-intent.js" },
-    { "src": "/api/payment-intent", "dest": "api/payment-intent.js" },
-    { "src": "/api/create-checkout-session", "dest": "api/create-checkout-session.js" },
-    { "src": "/api/checkout-session", "dest": "api/checkout-session.js" },
-    { "src": "/api/stripe/webhook", "dest": "api/stripe/webhook.js" }
-  ]
+  }
 }

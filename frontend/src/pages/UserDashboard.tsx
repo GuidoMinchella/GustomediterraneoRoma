@@ -38,7 +38,7 @@ interface OrderItem {
 }
 
 const UserDashboard: React.FC = () => {
-  const { user, signOut } = useAuth();
+  const { user, signOut, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -236,6 +236,13 @@ const UserDashboard: React.FC = () => {
                 </div>
               </div>
             </Card>
+            {isAdmin && (
+              <div className="mt-4">
+                <Button className="w-full">
+                  <a href="https://gustomediterraneoroma.it/admin" className="block w-full text-center">Vai al Pannello Admin</a>
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Order History */}
@@ -401,3 +408,4 @@ const UserDashboard: React.FC = () => {
 };
 
 export default UserDashboard;
+

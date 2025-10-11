@@ -7,7 +7,7 @@ export interface Dish {
   description: string;
   price: number;
   pricing_type?: 'fixed' | 'by_weight';
-  category: 'antipasti' | 'primi' | 'secondi' | 'contorni' | 'fritture' | 'panini' | 'vini';
+  category: 'antipasti' | 'primi' | 'secondi' | 'contorni' | 'fritture' | 'panini' | 'vini' | 'bevande' | 'birre';
   allergens: string[];
   tags: string[];
   image_url?: string;

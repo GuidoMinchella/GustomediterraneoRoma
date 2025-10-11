@@ -360,7 +360,7 @@ const UserDashboard: React.FC = () => {
                           </div>
                           
                           {/* Discount Information */}
-                          {order.discount_amount && order.discount_amount > 0 && (
+                          {order.discount_amount && order.discount_amount > 0 ? (
                             <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
                               <h5 className="font-medium text-mediterranean-blu-scuro mb-2">Sconto Applicato:</h5>
                               <div className="space-y-1 text-sm">
@@ -382,6 +382,13 @@ const UserDashboard: React.FC = () => {
                                 <div className="text-right text-green-600 font-medium">
                                   Hai risparmiato €{order.discount_amount.toFixed(2)}!
                                 </div>
+                              </div>
+                            </div>
+                          ) : (
+                            // Riga vuota: nessun testo "Sconto:" e nessun "0"
+                            <div className="mt-4 p-3 rounded-lg">
+                              <div className="space-y-1 text-sm">
+                                <div className="flex justify-between items-center h-5" />
                               </div>
                             </div>
                           )}
@@ -408,4 +415,3 @@ const UserDashboard: React.FC = () => {
 };
 
 export default UserDashboard;
-

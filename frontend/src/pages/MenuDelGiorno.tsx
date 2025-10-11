@@ -68,7 +68,9 @@ const MenuDelGiorno: React.FC = () => {
       'contorni': 'Contorni',
       'fritture': 'Fritture',
       'panini': 'Panini',
-      'vini': 'Vini'
+      'vini': 'Vini',
+      'bevande': 'Bevande',
+      'birre': 'Birre'
     };
     return labels[category] || category;
   };
@@ -82,6 +84,8 @@ const MenuDelGiorno: React.FC = () => {
     { id: 'fritture', label: 'Fritture' },
     { id: 'panini', label: 'Panini' },
     { id: 'vini', label: 'Vini' },
+    { id: 'bevande', label: 'Bevande' },
+    { id: 'birre', label: 'Birre' },
   ];
 
   const today = new Date().toLocaleDateString('it-IT', {

@@ -3,6 +3,7 @@ import { useDish } from '../../context/DishContext';
 import { Plus, Trash2, ChefHat } from 'lucide-react';
 import Button from '../UI/Button';
 import AddDishModal from './AddDishModal';
+import AllergenIcon from './AllergenIcon';
 
 const MenuFissoManagement: React.FC = () => {
   const { 
@@ -166,18 +167,13 @@ const MenuFissoManagement: React.FC = () => {
                               )}
                             </div>
                             {dish.allergens.length > 0 && (
-                              <div className="flex flex-wrap gap-1 mb-3">
-                                {dish.allergens.slice(0, 3).map((allergen, index) => (
-                                  <span
-                                    key={index}
-                                    className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800"
-                                  >
-                                    {allergen}
-                                  </span>
+                              <div className="flex flex-wrap gap-2 mb-3 items-center">
+                                {dish.allergens.slice(0, 6).map((allergen, index) => (
+                                  <AllergenIcon key={`${assignment.dish_id}-${index}`} allergen={allergen} />
                                 ))}
-                                {dish.allergens.length > 3 && (
+                                {dish.allergens.length > 6 && (
                                   <span className="text-xs text-gray-500">
-                                    +{dish.allergens.length - 3} altri
+                                    +{dish.allergens.length - 6} altri
                                   </span>
                                 )}
                               </div>

@@ -165,6 +165,20 @@
   animation: cartBump 300ms ease;
 }
 
+/* Error feedback: shake animation for wrong verification code */
+@keyframes shake {
+  0% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+  100% { transform: translateX(0); }
+}
+
+.animate-shake {
+  animation: shake 400ms ease-in-out;
+}
+
 /* --- Stripe 3DS overlay hardening (mobile) --- */
 /* Ensure page chrome doesn't create stacking contexts that sit above Stripe's challenge */
 html, body, #root {
@@ -182,3 +196,4 @@ iframe[name^="__privateStripeFrame"], iframe[name^="__stripe"] {
 .pagamento-isolation *[data-overlay], .pagamento-isolation .fixed, .pagamento-isolation .sticky {
   pointer-events: none !important;
 }
+

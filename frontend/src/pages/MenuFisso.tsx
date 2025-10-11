@@ -8,6 +8,8 @@ import Card from '../components/UI/Card';
 import LoginModal from '../components/Auth/LoginModal';
 import RegisterModal from '../components/Auth/RegisterModal';
 import { animateToCart } from '../utils/animateToCart';
+import AllergenIcon from '../components/Admin/AllergenIcon';
+import AllergenLegend from '../components/AllergenLegend';
 
 const MenuFisso: React.FC = () => {
   const { addItem } = useCart();
@@ -350,6 +352,9 @@ const MenuFisso: React.FC = () => {
           </p>
         </div>
 
+        {/* Legenda Allergeni (tendina sotto salse, desktop e mobile) */}
+        <AllergenLegend />
+
         {fixedMenuDishes.length === 0 ? (
           <div className="text-center py-16">
             <ChefHat className="w-24 h-24 text-mediterranean-marroncino mx-auto mb-6 opacity-50" />
@@ -607,17 +612,9 @@ const MenuFisso: React.FC = () => {
                             {/* Allergens */}
                             {dish.allergens.length > 0 && (
                               <div className="mb-3">
-                                <p className="text-xs text-mediterranean-blu-scuro opacity-75 mb-1">
-                                  Allergeni:
-                                </p>
-                                <div className="flex flex-wrap gap-1">
+                                <div className="flex flex-wrap gap-2 items-center">
                                   {dish.allergens.map((allergen: string, index: number) => (
-                                    <span
-                                      key={index}
-                                      className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full"
-                                    >
-                                      {allergen}
-                                    </span>
+                                    <AllergenIcon key={`${dish.id}-${index}`} allergen={allergen} />
                                   ))}
                                 </div>
                               </div>

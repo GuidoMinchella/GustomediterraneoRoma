@@ -36,6 +36,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminLoading, setAdminLoading] = useState(false);
 
+  // Upsert utente in public.users quando cambia lo stato auth
+  const ensureUserRow = async (usr: User | null) => {
+    try {
+      if (!usr?.email) return;
+      const provider = (usr.app_metadata as any)?.provider === 'google' ? 'google' : 'registrazione';
+      const nome = (usr.user_metadata as any)?.full_name || (usr.user_metadata as any)?.name || '';
+      const email_confermata = Boolean((usr as any)?.email_confirmed_at);
+      await supabase.from('users').upsert({
+        email: usr.email,
+        nome,
+        email_confermata,
+        providers: provider,
+      }, { onConflict: 'email' });
+    } catch (e: any) {
+      console.warn('ensureUserRow failed:', e?.message || e);
+    }
+  };
+
   // Function to check if user is admin
   const checkAdminStatus = async (userEmail: string) => {
     try {
@@ -62,6 +80,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      // Upsert user row
+      ensureUserRow(session?.user ?? null);
       
       // Check admin status if user is logged in
       if (session?.user?.email) {
@@ -79,6 +99,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      // Upsert user row
+      ensureUserRow(session?.user ?? null);
       
       // Check admin status when auth state changes
       if (session?.user?.email) {

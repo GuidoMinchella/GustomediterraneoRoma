@@ -274,7 +274,7 @@ const Home: React.FC = () => {
   return (
     <div className="animate-fade-in">
       {/* Fixed Action Buttons - Bottom Left */}
-      <div className="fixed bottom-6 left-6 z-50 flex flex-col gap-3">
+      <div className="home-floating-actions fixed bottom-6 left-6 z-50 flex flex-col gap-3">
         {/* Phone Button */}
         <a href="tel:+393313320411" className="group">
           <div className="w-14 h-14 bg-green-600 hover:bg-green-700 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group-hover:scale-110">

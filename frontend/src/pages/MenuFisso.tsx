@@ -53,6 +53,8 @@ const MenuFisso: React.FC = () => {
     { id: 'fritture', label: 'Fritture' },
     { id: 'panini', label: 'Panini' },
     { id: 'vini', label: 'Vini' },
+    { id: 'bevande', label: 'Bevande' },
+    { id: 'birre', label: 'Birre' },
   ];
 
   const filters = [
@@ -61,6 +63,8 @@ const MenuFisso: React.FC = () => {
     { id: 'crudo', label: 'Crudi' },
     { id: 'grigliato', label: 'Grigliati' },
     { id: 'vegetariano', label: 'Vegetariano' },
+    { id: 'bevande', label: 'Bevande' },
+    { id: 'birre', label: 'Birre' },
   ];
 
   const formatPrice = (price: number) => {
@@ -78,7 +82,9 @@ const MenuFisso: React.FC = () => {
       'contorni': 'Contorni',
       'fritture': 'Fritture',
       'panini': 'Panini',
-      'vini': 'Vini'
+      'vini': 'Vini',
+      'bevande': 'Bevande',
+      'birre': 'Birre'
     };
     return labels[category] || category;
   };
@@ -106,6 +112,10 @@ const MenuFisso: React.FC = () => {
           return dish.tags?.includes('grigliato') || false;
         case 'vegetariano':
           return !dish.allergens.includes('pesce') && !dish.allergens.includes('molluschi') && !dish.allergens.includes('crostacei');
+        case 'bevande':
+          return dish.category === 'bevande';
+        case 'birre':
+          return dish.category === 'birre';
         default:
           return true;
       }

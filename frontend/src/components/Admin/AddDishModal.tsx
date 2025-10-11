@@ -51,7 +51,9 @@ const AddDishModal: React.FC<AddDishModalProps> = ({
     { value: 'contorni', label: 'Contorni' },
     { value: 'fritture', label: 'Fritture' },
     { value: 'panini', label: 'Panini' },
-    { value: 'vini', label: 'Vini' }
+    { value: 'vini', label: 'Vini' },
+    { value: 'bevande', label: 'Bevande' },
+    { value: 'birre', label: 'Birre' }
   ];
 
   const formatPrice = (price: number) => {
@@ -69,7 +71,9 @@ const AddDishModal: React.FC<AddDishModalProps> = ({
       'contorni': 'Contorni',
       'fritture': 'Fritture',
       'panini': 'Panini',
-      'vini': 'Vini'
+      'vini': 'Vini',
+      'bevande': 'Bevande',
+      'birre': 'Birre'
     };
     return labels[category] || category;
   };

@@ -462,8 +462,8 @@ const Home: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div className="space-y-8">
               {/* Header with decorative line */}
-              <div className="text-center lg:text-left">
-                <div className="flex items-center justify-center lg:justify-start mb-4">
+              <div className="text-center">
+                <div className="flex items-center justify-center mb-4">
                   <div className="h-px bg-mediterranean-marrone w-12 mr-4"></div>
                   <Fish className="w-8 h-8 text-mediterranean-marrone" />
                   <div className="h-px bg-mediterranean-marrone w-12 ml-4"></div>
@@ -492,7 +492,7 @@ const Home: React.FC = () => {
                     <div className="flex-shrink-0 w-12 h-12 bg-mediterranean-marrone/10 rounded-full flex items-center justify-center">
                       <Timer className="w-6 h-6 text-mediterranean-marrone" />
                     </div>
-                    <div>
+                    <div className="text-center">
                       <h3 className="font-serif text-xl font-semibold text-mediterranean-blu-scuro mb-2">
                         Selezione Quotidiana
                       </h3>
@@ -508,7 +508,7 @@ const Home: React.FC = () => {
                     <div className="flex-shrink-0 w-12 h-12 bg-mediterranean-marrone/10 rounded-full flex items-center justify-center">
                       <Leaf className="w-6 h-6 text-mediterranean-marrone" />
                     </div>
-                    <div>
+                    <div className="text-center">
                       <h3 className="font-serif text-xl font-semibold text-mediterranean-blu-scuro mb-2">
                         Filosofia Mediterranea
                       </h3>

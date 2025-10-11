@@ -14,7 +14,7 @@ const Footer: React.FC = () => {
                 <MapPin className="w-5 h-5 mt-1 flex-shrink-0" />
                 <div>
                   <p className="text-sm">Viale Anicio Gallo, 49, 00174 Roma RM</p>
-                <p className="text-sm">Roma (RM)</p>
+                <p className="text-sm"></p>
                 </div>
               </div>
               <div className="flex items-center space-x-3">
@@ -31,9 +31,14 @@ const Footer: React.FC = () => {
           {/* Orari */}
           <div>
             <h3 className="font-serif text-xl font-semibold mb-4">Orari di Apertura</h3>
-            <div className="space-y-2 text-sm">
-              <p className="font-medium">Momentaneamente chiusi</p>
-              <p className="text-xs opacity-80">Ci scusiamo per il disagio.</p>
+            <div className="space-y-1 text-sm">
+              <div className="flex items-center justify-between"><span>Lunedì</span><span className="font-medium">Chiuso</span></div>
+              <div className="flex items-center justify-between"><span>Martedì</span><span className="font-medium">11–15:30, 17–22</span></div>
+              <div className="flex items-center justify-between"><span>Mercoledì</span><span className="font-medium">11–15:30, 17–22</span></div>
+              <div className="flex items-center justify-between"><span>Giovedì</span><span className="font-medium">11–15:30, 17–22</span></div>
+              <div className="flex items-center justify-between"><span>Venerdì</span><span className="font-medium">11–15:30, 17–22</span></div>
+              <div className="flex items-center justify-between"><span>Sabato</span><span className="font-medium">11–15:30, 17–22</span></div>
+              <div className="flex items-center justify-between"><span>Domenica</span><span className="font-medium"> Chiuso</span></div>
             </div>
           </div>
 

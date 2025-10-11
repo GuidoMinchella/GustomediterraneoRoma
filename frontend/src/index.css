@@ -197,3 +197,9 @@ iframe[name^="__privateStripeFrame"], iframe[name^="__stripe"] {
   pointer-events: none !important;
 }
 
+/* Hide Home floating action buttons on mobile when any modal is open */
+@media (max-width: 768px) {
+  body.modal-open .home-floating-actions {
+    display: none !important;
+  }
+}

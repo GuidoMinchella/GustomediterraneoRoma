@@ -51,7 +51,9 @@ const MenuFissoManagement: React.FC = () => {
       'contorni': 'Contorni',
       'fritture': 'Fritture',
       'panini': 'Panini',
-      'vini': 'Vini'
+      'vini': 'Vini',
+      'bevande': 'Bevande',
+      'birre': 'Birre'
     };
     return labels[category] || category;
   };

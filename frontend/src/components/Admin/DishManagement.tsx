@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useDish } from '../../context/DishContext';
 import { Dish } from '../../context/DishContext';
 import { Plus, Edit2, Trash2, AlertCircle } from 'lucide-react';
+import AllergenIcon from './AllergenIcon';
 import Button from '../UI/Button';
 
 const DishManagement: React.FC = () => {
@@ -22,7 +23,22 @@ const DishManagement: React.FC = () => {
   });
 
   const categories = ['antipasti', 'primi', 'secondi', 'contorni', 'fritture', 'panini', 'vini', 'bevande', 'birre'];
-  const commonAllergens = ['glutine', 'latte', 'uova', 'pesce', 'molluschi', 'crostacei', 'soia', 'frutta a guscio', 'sedano', 'senape', 'sesamo', 'solfiti'];
+  const commonAllergens: { key: string; label: string }[] = [
+    { key: 'glutine', label: 'Glutine' },
+    { key: 'crostacei', label: 'Crostacei' },
+    { key: 'uova', label: 'Uova' },
+    { key: 'pesce', label: 'Pesce' },
+    { key: 'arachidi', label: 'Arachidi' },
+    { key: 'soia', label: 'Soia' },
+    { key: 'latte', label: 'Latte' },
+    { key: 'frutta a guscio', label: 'Frutta a guscio' },
+    { key: 'sedano', label: 'Sedano' },
+    { key: 'senape', label: 'Senape' },
+    { key: 'sesamo', label: 'Sesamo' },
+    { key: 'anidride solforosa/solfitti', label: 'Anidride solforosa/solfitti' },
+    { key: 'lupini', label: 'Lupini' },
+    { key: 'molluschi', label: 'Molluschi' },
+  ];
 
   useEffect(() => {
     fetchDishes();
@@ -247,10 +263,12 @@ const DishManagement: React.FC = () => {
 
                           {dish.allergens && dish.allergens.length > 0 && (
                             <div className="mb-2">
-                              <span className="text-sm font-medium text-gray-700">Allergeni: </span>
-                              <span className="text-sm text-gray-600">
-                                {dish.allergens.join(', ')}
-                              </span>
+                              <span className="text-sm font-medium text-gray-700 mr-2">Allergeni:</span>
+                              <div className="flex flex-wrap gap-2 items-center">
+                                {dish.allergens.map((a) => (
+                                  <AllergenIcon key={`${dish.id}-${a}`} allergen={a} />
+                                ))}
+                              </div>
                             </div>
                           )}
 
@@ -410,16 +428,17 @@ const DishManagement: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Allergeni
                 </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {commonAllergens.map(allergen => (
-                    <label key={allergen} className="flex items-center">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {commonAllergens.map(({ key, label }) => (
+                    <label key={key} className="flex items-center gap-3 p-2 rounded-md border border-gray-200 hover:border-orange-300 hover:bg-orange-50 cursor-pointer">
+                      <AllergenIcon allergen={key} />
+                      <span className="text-sm font-medium text-gray-700">{label}</span>
                       <input
                         type="checkbox"
-                        checked={formData.allergens.includes(allergen)}
-                        onChange={() => handleAllergenToggle(allergen)}
-                        className="mr-2"
+                        checked={formData.allergens.includes(key)}
+                        onChange={() => handleAllergenToggle(key)}
+                        className="ml-auto accent-orange-600"
                       />
-                      <span className="text-sm">{allergen}</span>
                     </label>
                   ))}
                 </div>

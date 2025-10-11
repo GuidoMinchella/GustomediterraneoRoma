@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useDish } from '../../context/DishContext';
 import { X, Plus, Search, ChefHat, Loader2 } from 'lucide-react';
 import Button from '../UI/Button';
+import AllergenIcon from './AllergenIcon';
 
 interface AddDishModalProps {
   isOpen: boolean;
@@ -175,18 +176,13 @@ const AddDishModal: React.FC<AddDishModalProps> = ({
                             </span>
                           </div>
                           {dish.allergens.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-2">
-                              {dish.allergens.slice(0, 3).map((allergen, index) => (
-                                <span
-                                  key={index}
-                                  className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800"
-                                >
-                                  {allergen}
-                                </span>
+                            <div className="flex flex-wrap gap-2 mt-2 items-center">
+                              {dish.allergens.slice(0, 6).map((allergen, index) => (
+                                <AllergenIcon key={`${dish.id}-${index}`} allergen={allergen} />
                               ))}
-                              {dish.allergens.length > 3 && (
+                              {dish.allergens.length > 6 && (
                                 <span className="text-xs text-gray-500">
-                                  +{dish.allergens.length - 3} altri
+                                  +{dish.allergens.length - 6} altri
                                 </span>
                               )}
                             </div>

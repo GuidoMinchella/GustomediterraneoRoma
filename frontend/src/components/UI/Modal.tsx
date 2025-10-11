@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
 
 interface ModalProps {
@@ -9,6 +9,18 @@ interface ModalProps {
 }
 
 const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
+  // Toggle global class based on open state, and ensure cleanup
+  useEffect(() => {
+    if (isOpen) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+    return () => {
+      document.body.classList.remove('modal-open');
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
@@ -35,6 +47,12 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
           </div>
           {children}
         </div>
+      </div>
+    </div>
+  );
+};
+
+export default Modal;        </div>
       </div>
     </div>
   );

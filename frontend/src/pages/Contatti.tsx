@@ -10,7 +10,7 @@ const Contatti: React.FC = () => {
     },
     {
       question: 'Quali sono gli orari di ritiro disponibili?',
-      answer: 'Gli orari di ritiro sono: martedì-sabato dalle 11:00 alle 15:30 e dalle 17:00 alle 22:00, domenica dalle 09:30 alle 15:00. Lunedì chiuso.',
+      answer: 'Gli orari di ritiro sono: martedì–sabato 11–15:30, 17–22; domenica Chiuso; lunedì chiuso.',
     },
     {
       question: 'Posso richiedere informazioni sugli allergeni?',
@@ -91,9 +91,14 @@ const Contatti: React.FC = () => {
                   <Clock className="w-6 h-6 text-mediterranean-marroncino mt-1 flex-shrink-0" />
                   <div>
                     <h4 className="font-semibold text-mediterranean-blu-scuro mb-2">Orari di Apertura</h4>
-                    <div className="space-y-1 text-mediterranean-blu-scuro">
-                      <p className="font-medium">Momentaneamente chiusi</p>
-                      <p className="text-sm opacity-75">Ci scusiamo per il disagio.</p>
+                    <div className="space-y-1 text-mediterranean-blu-scuro text-sm">
+                      <div className="flex items-center justify-between"><span>Lunedì</span><span className="font-medium">Chiuso</span></div>
+                      <div className="flex items-center justify-between"><span>Martedì</span><span className="font-medium">11–15:30, 17–22</span></div>
+                      <div className="flex items-center justify-between"><span>Mercoledì</span><span className="font-medium">11–15:30, 17–22</span></div>
+                      <div className="flex items-center justify-between"><span>Giovedì</span><span className="font-medium">11–15:30, 17–22</span></div>
+                      <div className="flex items-center justify-between"><span>Venerdì</span><span className="font-medium">11–15:30, 17–22</span></div>
+                      <div className="flex items-center justify-between"><span>Sabato</span><span className="font-medium">11–15:30, 17–22</span></div>
+                      <div className="flex items-center justify-between"><span>Domenica</span><span className="font-medium">Chiuso</span></div>
                     </div>
                   </div>
                 </div>
@@ -157,20 +162,22 @@ const Contatti: React.FC = () => {
               <h3 className="font-serif text-2xl font-semibold text-mediterranean-blu-scuro mb-6">
                 Dove Siamo
               </h3>
-              <div className="aspect-video bg-gray-200 rounded-lg flex items-center justify-center">
-                <div className="text-center">
-                  <MapPin className="w-12 h-12 text-mediterranean-marroncino mx-auto mb-2" />
-                  <p className="text-mediterranean-blu-scuro font-medium">Mappa Interattiva</p>
-                  <p className="text-sm text-mediterranean-blu-scuro opacity-75">
-                    Viale Anicio Gallo, 49, 00174 Roma RM
-                  </p>
-                  <button 
-                    onClick={() => window.open('https://maps.google.com/?q=Viale+Anicio+Gallo+49+Roma', '_blank')}
-                    className="mt-4 px-4 py-2 bg-mediterranean-marroncino text-mediterranean-bianco rounded-lg hover:bg-opacity-90 transition-colors text-sm"
-                  >
-                    Apri in Google Maps
-                  </button>
-                </div>
+              <div className="aspect-video rounded-lg overflow-hidden">
+                <iframe
+                  title="Mappa Gusto Mediterraneo"
+                  src="https://www.google.com/maps?q=Viale+Anicio+Gallo+49,+00174+Roma+RM&z=16&output=embed"
+                  className="w-full h-full border-0"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                ></iframe>
+              </div>
+              <div className="mt-4 text-center">
+                <button 
+                  onClick={() => window.open('https://maps.google.com/?q=Viale+Anicio+Gallo+49+Roma', '_blank')}
+                  className="px-4 py-2 bg-mediterranean-marroncino text-mediterranean-bianco rounded-lg hover:bg-opacity-90 transition-colors text-sm"
+                >
+                  Apri in Google Maps
+                </button>
               </div>
             </Card>
           </div>

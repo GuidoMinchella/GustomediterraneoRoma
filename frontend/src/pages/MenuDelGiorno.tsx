@@ -8,6 +8,8 @@ import Card from '../components/UI/Card';
 import LoginModal from '../components/Auth/LoginModal';
 import RegisterModal from '../components/Auth/RegisterModal';
 import { animateToCart } from '../utils/animateToCart';
+import AllergenIcon from '../components/Admin/AllergenIcon';
+import AllergenLegend from '../components/AllergenLegend';
 
 const MenuDelGiorno: React.FC = () => {
   const { addItem } = useCart();
@@ -126,7 +128,7 @@ const MenuDelGiorno: React.FC = () => {
 
         {/* Crudo su Ordinazione con immagine di sfondo e overlay scuro */}
         <div className="mb-4">
-          <Card className="relative overflow-hidden text-white">
+          <Card className="relative overflow-hidden text-white h-full">
             {/* Background image */}
             <div
               className="absolute inset-0 bg-cover bg-center"
@@ -166,6 +168,10 @@ const MenuDelGiorno: React.FC = () => {
             *tutte le salse che offriamo sono preparate da noi*
           </p>
         </div>
+        
+
+        {/* Legenda Allergeni (tendina sotto salse, desktop e mobile) */}
+        <AllergenLegend />
 
         {/* Today's Specials raggruppati per categoria */}
         {dailyMenuDishes.length === 0 ? (
@@ -241,17 +247,9 @@ const MenuDelGiorno: React.FC = () => {
                             {/* Allergens */}
                             {dish.allergens.length > 0 && (
                               <div className="mb-3">
-                                <p className="text-xs text-mediterranean-blu-scuro opacity-75 mb-1">
-                                  Allergeni:
-                                </p>
-                                <div className="flex flex-wrap gap-1">
+                                <div className="flex flex-wrap gap-2 items-center">
                                   {dish.allergens.map((allergen, index) => (
-                                    <span
-                                      key={index}
-                                      className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full"
-                                    >
-                                      {allergen}
-                                    </span>
+                                    <AllergenIcon key={`${dish.id}-${index}`} allergen={allergen} />
                                   ))}
                                 </div>
                               </div>

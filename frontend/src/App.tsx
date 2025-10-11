@@ -15,6 +15,7 @@ import Galleria from './pages/Galleria';
 import Contatti from './pages/Contatti';
 import AdminDashboard from './pages/AdminDashboard';
 import UserDashboard from './pages/UserDashboard';
+import RegistrationSuccess from './pages/RegistrationSuccess';
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
               <Route path="/dashboard" element={<UserDashboard />} />
               <Route path="/galleria" element={<Galleria />} />
               <Route path="/contatti" element={<Contatti />} />
+              <Route path="/registrazione-successo" element={<RegistrationSuccess />} />
               <Route 
                 path="/admin" 
                 element={

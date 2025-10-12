@@ -51,7 +51,7 @@ async function fetchOrderItems(orderId) {
     // If not configured yet, return empty list; we'll still send the order header
     return [];
   }
-  const endpoint = `${url.replace(/\/$/, '')}/rest/v1/order_items?order_id=eq.${encodeURIComponent(orderId)}&select=dish_name,quantity,quantiti,dish_price,pricing_type,weight_grams`;
+  const endpoint = `${url.replace(/\/$/, '')}/rest/v1/order_items?order_id=eq.${encodeURIComponent(orderId)}&select=*`;
   const resp = await fetch(endpoint, {
     method: 'GET',
     headers: {
@@ -123,9 +123,18 @@ export default async function handler(req, res) {
 
     // Fetch items with short backoff, as they may be inserted right after the order
     const items = await fetchOrderItemsWithRetry(orderId);
+    const normItems = Array.isArray(items)
+      ? items.map((it) => ({
+          dish_name: it.dish_name ?? it.name ?? it.title,
+          quantity: it.quantity ?? it.quantiti ?? it.qty ?? it.qta,
+          dish_price: it.dish_price ?? it.price ?? it.unit_price ?? it.subtotal,
+          pricing_type: it.pricing_type,
+          weight_grams: it.weight_grams ?? it.grams ?? it.weight,
+        }))
+      : [];
 
     // Build message
-    const text = buildOrderMessage(record, items);
+    const text = buildOrderMessage(record, normItems);
 
     // Send to Telegram
     const botToken = process.env.TELEGRAM_BOT_TOKEN;

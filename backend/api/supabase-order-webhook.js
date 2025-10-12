@@ -44,6 +44,54 @@ function buildOrderMessage(orderRecord, items = []) {
   return `${header}${body}`;
 }
 
+// Fetch latest order by id from Supabase REST
+async function fetchOrderById(orderId) {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) {
+    return null;
+  }
+  const endpoint = `${url.replace(/\/$/, '')}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}&select=id,customer_name,customer_email,customer_phone,pickup_date,pickup_time,payment_method,total_amount,original_amount`;
+  const resp = await fetch(endpoint, {
+    method: 'GET',
+    headers: {
+      apikey: key,
+      Authorization: `Bearer ${key}`,
+      Accept: 'application/json',
+    },
+  });
+  if (!resp.ok) {
+    const text = await resp.text().catch(() => '');
+    console.warn('[Supabase REST] orders fetch failed:', resp.status, text);
+    return null;
+  }
+  const data = await resp.json().catch(() => []);
+  if (Array.isArray(data) && data.length > 0) {
+    return data[0];
+  }
+  return null;
+}
+
+// Retry helper to wait for discounted total_amount to be available
+// Default ~7s total wait to fit under a 10s webhook timeout
+async function fetchOrderWithRetry(orderId, attempts = 10, delayMs = 700) {
+  let last = null;
+  for (let i = 0; i < attempts; i++) {
+    const order = await fetchOrderById(orderId);
+    if (order) {
+      last = order;
+      // Prefer returning when total_amount is present (discount applied)
+      if (order.total_amount !== null && order.total_amount !== undefined) {
+        return order;
+      }
+    }
+    if (i < attempts - 1) {
+      await new Promise((r) => setTimeout(r, delayMs));
+    }
+  }
+  return last; // may be null or pre-discount; caller will fallback to record
+}
+
 async function fetchOrderItems(orderId) {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;

@@ -833,12 +833,12 @@ const Home: React.FC = () => {
             </div>
             <div className="relative">
               <img
-                src="/images/img.webp"
+                src="/images/img5.jpg"
                 alt="Pesca sostenibile"
-                className="rounded-lg shadow-2xl w-full h-96 object-cover"
+                className="rounded-lg shadow-2xl w-full h-96 md:h-96 object-cover"
               />
               {/* Card sovrapposta all'immagine */}
-              <div className="absolute -top-4 -left-6 bg-mediterranean-beige text-mediterranean-blu-scuro p-8 rounded-lg shadow-xl border-4 border-mediterranean-marroncino max-w-sm transform rotate-[-2deg] z-10">
+              <div className="absolute -top-2 -left-3 md:-top-4 md:-left-6 bg-mediterranean-beige text-mediterranean-blu-scuro p-5 md:p-8 rounded-lg shadow-xl border-2 md:border-4 border-mediterranean-marroncino max-w-xs md:max-w-sm transform rotate-[-1deg] md:rotate-[-2deg] z-10">
                 <div className="font-serif">
                   <h3 className="font-bold text-xl mb-4 text-mediterranean-blu-scuro flex items-center">
                     <Fish className="w-6 h-6 mr-2" />

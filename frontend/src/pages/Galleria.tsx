@@ -19,12 +19,9 @@ const Galleria: React.FC = () => {
         '/images/panini.jpg',
         '/images/panini (2).jpg',
         '/images/panini (3).jpg',
-        '/images/panini (4).jpg',
         '/images/panini (5).jpg',
         '/images/panino.alici.jpg',
-        '/images/panino.polpo.fritto.jpg',
         '/images/panino.polpo.rosticciato.jpg',
-        '/images/panino.salmone.jpg',
       ],
     },
     fritti: {
@@ -32,14 +29,12 @@ const Galleria: React.FC = () => {
       images: [
         '/images/fritti.jpg',
         '/images/fritti (2).jpg',
-        '/images/fritti (3).jpg',
         '/images/fritti (4).jpg',
         '/images/fritti (5).jpg',
         '/images/fritti (6).jpg',
         '/images/fritti (7).jpg',
         '/images/fritti (8).jpg',
         '/images/fritti (9).jpg',
-        '/images/frittivari.jpg',
       ],
     },
     crudo: {
@@ -127,11 +122,12 @@ const Galleria: React.FC = () => {
   const keysToRender = selectedTag === 'all' ? orderedKeys : orderedKeys.filter(k => k === selectedTag);
 
   return (
-    <div
-      className="min-h-screen bg-fixed bg-cover bg-center relative"
-      style={{ backgroundImage: "url('/images/sfondohome.jpg')" }}
-    >
-      <div className="absolute inset-0 bg-black/60" />
+    <div className="relative min-h-screen">
+      <div
+        className="fixed inset-0 z-0 bg-cover bg-center"
+        style={{ backgroundImage: "url('/images/sfondohome.jpg')" }}
+      />
+      <div className="fixed inset-0 z-0 bg-black/60" />
       <div className="relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           {/* Header */}

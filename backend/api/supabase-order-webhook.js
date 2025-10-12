@@ -69,6 +69,19 @@ async function fetchOrderItems(orderId) {
   return Array.isArray(data) ? data : [];
 }
 
+// Retry helper to wait for order_items to be inserted shortly after orders
+// Default ~7s total wait to fit under a 10s webhook timeout
+async function fetchOrderItemsWithRetry(orderId, attempts = 10, delayMs = 700) {
+  for (let i = 0; i < attempts; i++) {
+    const items = await fetchOrderItems(orderId);
+    if (Array.isArray(items) && items.length > 0) return items;
+    if (i < attempts - 1) {
+      await new Promise((r) => setTimeout(r, delayMs));
+    }
+  }
+  return [];
+}
+
 export default async function handler(req, res) {
   cors(req, res);
   if (handleOptions(req, res)) return;
@@ -108,8 +121,8 @@ export default async function handler(req, res) {
       }
     }
 
-    // Fetch items
-    const items = await fetchOrderItems(orderId);
+    // Fetch items with short backoff, as they may be inserted right after the order
+    const items = await fetchOrderItemsWithRetry(orderId);
 
     // Build message
     const text = buildOrderMessage(record, items);

@@ -133,8 +133,10 @@ export default async function handler(req, res) {
         }))
       : [];
 
-    // Build message
-    const text = buildOrderMessage(record, normItems);
+    // Build message using latest order from DB to ensure discounted total_amount
+    const latestOrder = await fetchOrderWithRetry(orderId);
+    const effectiveOrder = latestOrder || record || {};
+    const text = buildOrderMessage(effectiveOrder, normItems);
 
     // Send to Telegram
     const botToken = process.env.TELEGRAM_BOT_TOKEN;

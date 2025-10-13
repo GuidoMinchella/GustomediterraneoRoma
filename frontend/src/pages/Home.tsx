@@ -57,6 +57,9 @@ const Home: React.FC = () => {
   // Mobile-only image animations for "La Nostra Cucina"
   const cucinaImg1Ref = useRef<HTMLElement | null>(null);
   const cucinaImg2Ref = useRef<HTMLElement | null>(null);
+  // Refs dedicati per i blocchi mobile sotto titolo/sottotitolo
+  const cucinaMobileImg1Ref = useRef<HTMLDivElement | null>(null);
+  const cucinaMobileImg2Ref = useRef<HTMLDivElement | null>(null);
   const cucinaImgMainRef = useRef<HTMLElement | null>(null);
   const [cucinaImg1Visible, setCucinaImg1Visible] = useState(false);
   const [cucinaImg2Visible, setCucinaImg2Visible] = useState(false);
@@ -125,8 +128,9 @@ const Home: React.FC = () => {
       observers.push(obs);
     };
 
-    observeOnce(cucinaImg1Ref.current, setCucinaImg1Visible, 0.25);
-    observeOnce(cucinaImg2Ref.current, setCucinaImg2Visible, 0.25);
+    // Su mobile osserviamo i blocchi mobile dedicati, non quelli desktop nascosti
+    observeOnce(cucinaMobileImg1Ref.current, setCucinaImg1Visible, 0.25);
+    observeOnce(cucinaMobileImg2Ref.current, setCucinaImg2Visible, 0.25);
     observeOnce(cucinaImgMainRef.current, setCucinaImgMainVisible, 0.2);
 
     return () => {
@@ -480,6 +484,39 @@ const Home: React.FC = () => {
                 >
                   Tradizione, Passione e Autenticità
                 </p>
+              {/* Mobile-only highlight images below title/subtitle */}
+              <div className="grid grid-cols-2 gap-3 mt-4 mb-6 md:hidden">
+                <div
+                  ref={cucinaMobileImg1Ref}
+                  className={`relative group ${((isMobile ? cucinaImg1Visible : cucinaAnimated)) ? 'animate-slide-in-left' : 'opacity-0'}`}
+                  style={((isMobile ? cucinaImg1Visible : cucinaAnimated)) ? { animationDelay: '450ms', animationDuration: '700ms', animationFillMode: 'both' } : undefined}
+                >
+                  <img
+                    src="/images/locale (2).jpg"
+                    alt="Specialità della casa"
+                    className="rounded-xl shadow-lg w-full h-28 object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent rounded-xl"></div>
+                  <div className="absolute bottom-2 left-2 text-white">
+                    <p className="font-serif text-xs font-semibold">Specialità</p>
+                  </div>
+                </div>
+                <div
+                  ref={cucinaMobileImg2Ref}
+                  className={`relative group ${((isMobile ? cucinaImg2Visible : cucinaAnimated)) ? 'animate-slide-in-right' : 'opacity-0'}`}
+                  style={((isMobile ? cucinaImg2Visible : cucinaAnimated)) ? { animationDelay: '600ms', animationDuration: '700ms', animationFillMode: 'both' } : undefined}
+                >
+                  <img
+                    src="/images/panino.salmone.jpg"
+                    alt="Panino polpo rosticciato"
+                    className="rounded-xl shadow-lg w-full h-28 object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent rounded-xl"></div>
+                  <div className="absolute bottom-2 left-2 text-white">
+                    <p className="font-serif text-xs font-semibold">Panini</p>
+                  </div>
+                </div>
+              </div>
               </div>
 
               {/* Content with enhanced styling */}
@@ -488,42 +525,32 @@ const Home: React.FC = () => {
                 style={cucinaAnimated ? { animationDelay: '300ms', animationDuration: '700ms', animationFillMode: 'both' } : undefined}
               >
                 <div className="space-y-6">
-                  <div className="flex items-start space-x-4">
-                    <div className="flex-shrink-0 w-12 h-12 bg-mediterranean-marrone/10 rounded-full flex items-center justify-center">
-                      <Timer className="w-6 h-6 text-mediterranean-marrone" />
-                    </div>
-                    <div className="text-center">
-                      <h3 className="font-serif text-xl font-semibold text-mediterranean-blu-scuro mb-2">
-                        Selezione Quotidiana
-                      </h3>
-                      <p className="text-mediterranean-blu-scuro leading-relaxed">
-                        Nel cuore di Roma, portiamo avanti una tradizione culinaria che affonda le radici 
-                        nel rispetto per il mare e i suoi frutti. Ogni giorno selezioniamo personalmente 
-                        il pesce più fresco lavorandolo con tecniche che preservano sapori autentici e genuini.
-                      </p>
-                    </div>
+                  <div className="text-center">
+                    <h3 className="font-serif text-xl font-semibold text-mediterranean-blu-scuro mb-2">
+                      Selezione Quotidiana
+                    </h3>
+                    <p className="text-mediterranean-blu-scuro leading-relaxed">
+                      Nel cuore di Roma, portiamo avanti una tradizione culinaria che affonda le radici 
+                      nel rispetto per il mare e i suoi frutti. Ogni giorno selezioniamo personalmente 
+                      il pesce più fresco lavorandolo con tecniche che preservano sapori autentici e genuini.
+                    </p>
                   </div>
 
-                  <div className="flex items-start space-x-4">
-                    <div className="flex-shrink-0 w-12 h-12 bg-mediterranean-marrone/10 rounded-full flex items-center justify-center">
-                      <Leaf className="w-6 h-6 text-mediterranean-marrone" />
-                    </div>
-                    <div className="text-center">
-                      <h3 className="font-serif text-xl font-semibold text-mediterranean-blu-scuro mb-2">
-                        Filosofia Mediterranea
-                      </h3>
-                      <p className="text-mediterranean-blu-scuro leading-relaxed">
-                        La nostra filosofia è semplice: ingredienti di qualità superiore, preparazioni rispettose 
-                        della tradizione mediterranea e l'amore per il buon cibo che si tramanda di generazione 
-                        in generazione.
-                      </p>
-                    </div>
+                  <div className="text-center">
+                    <h3 className="font-serif text-xl font-semibold text-mediterranean-blu-scuro mb-2">
+                      Filosofia Mediterranea
+                    </h3>
+                    <p className="text-mediterranean-blu-scuro leading-relaxed">
+                      La nostra filosofia è semplice: ingredienti di qualità superiore, preparazioni rispettose 
+                      della tradizione mediterranea e l'amore per il buon cibo che si tramanda di generazione 
+                      in generazione.
+                    </p>
                   </div>
                 </div>
               </div>
 
-              {/* Small images section */}
-              <div className="grid grid-cols-2 gap-6 mt-8">
+              {/* Small images section (desktop only) */}
+              <div className="hidden md:grid grid-cols-2 gap-6 mt-8">
                 <div
                   ref={cucinaImg1Ref as React.MutableRefObject<HTMLElement | null>}
                   className={`relative group ${((isMobile ? cucinaImg1Visible : cucinaAnimated)) ? 'animate-slide-in-left' : 'opacity-0'}`}
@@ -594,7 +621,7 @@ const Home: React.FC = () => {
                </button>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
               {loading && (
                 <div className="col-span-1 md:col-span-3 text-center text-mediterranean-blu-scuro">
                   Caricamento menu del giorno...
@@ -611,7 +638,7 @@ const Home: React.FC = () => {
                   return (
                     <div key={`${item.id}-${idx}`} className="group cursor-pointer">
                       <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
-                        <div className="relative h-48 overflow-hidden">
+                        <div className="relative h-44 md:h-48 overflow-hidden">
                           <img
                             src={imageSrc}
                             alt={dish.name}
@@ -620,12 +647,12 @@ const Home: React.FC = () => {
                           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                         </div>
                         
-                        <div className="p-6">
+                        <div className="p-4 md:p-6">
                           <div className="flex justify-between items-start mb-3">
-                            <h4 className="font-serif text-xl font-bold text-mediterranean-blu-scuro group-hover:text-mediterranean-marroncino transition-colors durata-300">
+                            <h4 className="font-serif text-lg md:text-xl font-bold text-mediterranean-blu-scuro group-hover:text-mediterranean-marroncino transition-colors durata-300">
                               {dish.name}
                             </h4>
-                            <span className="text-2xl font-bold text-mediterranean-marroncino">
+                            <span className="text-xl md:text-2xl font-bold text-mediterranean-marroncino">
                               {formatPrice(dish.price)}
                             </span>
                           </div>
@@ -671,7 +698,7 @@ const Home: React.FC = () => {
                </button>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
               {loading && (
                 <div className="col-span-1 md:col-span-3 text-center text-mediterranean-blu-scuro">
                   Caricamento menu fisso...
@@ -683,7 +710,7 @@ const Home: React.FC = () => {
                 return (
                   <div key={item.id} className="group cursor-pointer">
                     <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
-                      <div className="relative h-48 overflow-hidden">
+                      <div className="relative h-44 md:h-48 overflow-hidden">
                         <img
                           src={imageSrc}
                           alt={dish.name}
@@ -692,12 +719,12 @@ const Home: React.FC = () => {
                         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                       </div>
                       
-                      <div className="p-6">
+                      <div className="p-4 md:p-6">
                         <div className="flex justify-between items-start mb-3">
-                          <h4 className="font-serif text-xl font-bold text-mediterranean-blu-scuro group-hover:text-mediterranean-marroncino transition-colors duration-300">
+                          <h4 className="font-serif text-lg md:text-xl font-bold text-mediterranean-blu-scuro group-hover:text-mediterranean-marroncino transition-colors duration-300">
                             {dish.name}
                           </h4>
-                          <span className="text-2xl font-bold text-mediterranean-marroncino">
+                          <span className="text-xl md:text-2xl font-bold text-mediterranean-marroncino">
                             {formatPrice(dish.price)}
                           </span>
                         </div>
@@ -817,23 +844,23 @@ const Home: React.FC = () => {
                 nel rispetto della tradizione e della sostenibilità.
               </p>
               <div className="space-y-4">
-                <div className="flex items-center space-x-3">
-                  <Clock className="w-5 h-5 text-mediterranean-beige flex-shrink-0" />
+                <div className="flex items-center gap-3">
+                  <Fish className="w-5 h-5 text-mediterranean-marroncino" />
                   <span>Pescato selezionato quotidianamente</span>
                 </div>
-                <div className="flex items-center space-x-3">
-                  <Leaf className="w-5 h-5 text-mediterranean-beige flex-shrink-0" />
+                <div className="flex items-center gap-3">
+                  <Leaf className="w-5 h-5 text-mediterranean-marroncino" />
                   <span>Filiera corta e sostenibile</span>
                 </div>
-                <div className="flex items-center space-x-3">
-                  <Fish className="w-5 h-5 text-mediterranean-beige flex-shrink-0" />
+                <div className="flex items-center gap-3">
+                  <Award className="w-5 h-5 text-mediterranean-marroncino" />
                   <span>Controllo diretto della qualità</span>
                 </div>
               </div>
             </div>
             <div className="relative">
               <img
-                src="/images/img5.jpg"
+                src="/images/img.webp"
                 alt="Pesca sostenibile"
                 className="rounded-lg shadow-2xl w-full h-96 md:h-96 object-cover"
               />

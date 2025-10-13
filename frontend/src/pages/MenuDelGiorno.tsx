@@ -132,7 +132,7 @@ const MenuDelGiorno: React.FC = () => {
             {/* Background image */}
             <div
               className="absolute inset-0 bg-cover bg-center"
-              style={{ backgroundImage: "url('/images/img.webp')" }}
+              style={{ backgroundImage: "url('/images/img5.jpg')" }}
               aria-hidden="true"
             />
             {/* Dark overlay */}

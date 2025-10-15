@@ -16,6 +16,9 @@ import Contatti from './pages/Contatti';
 import AdminDashboard from './pages/AdminDashboard';
 import UserDashboard from './pages/UserDashboard';
 import RegistrationSuccess from './pages/RegistrationSuccess';
+import CookieConsent from './components/CookieConsent';
+import CookiesPolicy from './pages/CookiesPolicy';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 
 function App() {
   return (
@@ -24,6 +27,7 @@ function App() {
         <CartProvider>
           <ScrollToTop />
           <Layout>
+            <CookieConsent />
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/menu-fisso" element={<MenuFisso />} />
@@ -35,6 +39,8 @@ function App() {
               <Route path="/galleria" element={<Galleria />} />
               <Route path="/contatti" element={<Contatti />} />
               <Route path="/registrazione-successo" element={<RegistrationSuccess />} />
+              <Route path="/cookies-policy" element={<CookiesPolicy />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route 
                 path="/admin" 
                 element={

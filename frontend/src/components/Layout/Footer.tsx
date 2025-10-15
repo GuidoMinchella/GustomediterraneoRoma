@@ -61,6 +61,16 @@ const Footer: React.FC = () => {
               <a href="/contatti" className="block text-sm hover:text-mediterranean-beige transition-colors">
                 Contatti
               </a>
+              <a href="/privacy-policy" className="block text-sm hover:text-mediterranean-beige transition-colors">
+                Informativa sulla Privacy
+              </a>
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new Event('openCookieConsent'))}
+                className="block text-left w-full text-sm hover:text-mediterranean-beige transition-colors"
+              >
+                Gestisci cookie
+              </button>
             </div>
           </div>
 

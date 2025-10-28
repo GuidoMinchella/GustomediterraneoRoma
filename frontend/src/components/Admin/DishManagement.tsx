@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useDish } from '../../context/DishContext';
 import { Dish } from '../../context/DishContext';
-import { Plus, Edit2, Trash2, AlertCircle } from 'lucide-react';
+import { Plus, Edit2, Trash2, AlertCircle, Upload, X } from 'lucide-react';
+const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+const CLOUDINARY_FOLDER = import.meta.env.VITE_CLOUDINARY_FOLDER || 'gusto-mediterraneo/dishes';
 import AllergenIcon from './AllergenIcon';
 import Button from '../UI/Button';
 
@@ -21,6 +24,16 @@ const DishManagement: React.FC = () => {
     available: true,
     limited_quantity: false
   });
+
+  // Stato per upload immagine
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState<boolean>(false);
+  const [isDragActive, setIsDragActive] = useState<boolean>(false);
+
+  // Stato per migrazione immagini → deve stare sopra qualsiasi early return
+  const [migratingImages, setMigratingImages] = useState(false);
+  const [migrationResult, setMigrationResult] = useState<{ processed: number; updated: number; failed: number }>({ processed: 0, updated: 0, failed: 0 });
 
   const categories = ['antipasti', 'primi', 'secondi', 'contorni', 'fritture', 'panini', 'vini', 'bevande', 'birre'];
   const commonAllergens: { key: string; label: string }[] = [
@@ -101,8 +114,50 @@ const DishManagement: React.FC = () => {
         .filter(t => t !== 'by_weight')
     ));
 
+    // Seleziona l'URL immagine: se è stata selezionata una nuova immagine, caricala su Supabase Storage
+    let finalImageUrl = formData.image_url?.trim() || '';
+    if (selectedImageFile) {
+      try {
+        setUploadingImage(true);
+        const ext = (selectedImageFile.name.split('.').pop() || 'jpg').toLowerCase();
+        const safeName = (formData.name || 'piatto')
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)/g, '');
+        const unique = (typeof crypto !== 'undefined' && typeof (crypto as any).randomUUID === 'function')
+          ? (crypto as any).randomUUID()
+          : String(Date.now());
+        if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
+          throw new Error('Configurazione Cloudinary mancante: imposta VITE_CLOUDINARY_CLOUD_NAME e VITE_CLOUDINARY_UPLOAD_PRESET');
+        }
+        const fileBaseId = `${safeName}-${unique}`; // ID pubblico senza estensione
+        const formDataUpload = new FormData();
+        formDataUpload.append('file', selectedImageFile);
+        formDataUpload.append('upload_preset', CLOUDINARY_UPLOAD_PRESET as string);
+        formDataUpload.append('folder', CLOUDINARY_FOLDER);
+        // unsigned upload: non sono consentiti use_filename/unique_filename
+        formDataUpload.append('public_id', fileBaseId);
+        formDataUpload.append('tags', 'dish');
+        formDataUpload.append('context', `dish=${safeName}`);
+        const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/upload`;
+        const resp = await fetch(cloudinaryUrl, { method: 'POST', body: formDataUpload });
+        const json = await resp.json();
+        if (!resp.ok) throw new Error(json?.error?.message || 'Upload a Cloudinary fallito');
+        finalImageUrl = String(json.secure_url || json.url || '');
+        if (!finalImageUrl) throw new Error('Cloudinary non ha restituito un URL');
+      } catch (err: any) {
+        console.error('Errore upload immagine su Cloudinary:', err);
+        alert(`Errore nel caricamento della foto: ${err?.message || 'Verifica la configurazione Cloudinary (cloud name e upload preset)'}`);
+        setUploadingImage(false);
+        return; // Interrompi salvataggio se l'immagine non si carica
+      } finally {
+        setUploadingImage(false);
+      }
+    }
+
     const dishData = {
       ...formData,
+      image_url: finalImageUrl,
       price: parseFloat(formData.price),
       tags: nextTags,
       pricing_type: pricingType
@@ -116,6 +171,8 @@ const DishManagement: React.FC = () => {
       }
       
       resetForm();
+      setSelectedImageFile(null);
+      setImagePreview(null);
       setIsModalOpen(false);
     } catch (error) {
       console.error('Errore nel salvare il piatto:', error);
@@ -167,6 +224,8 @@ const DishManagement: React.FC = () => {
     });
     setPricingType('fixed');
     setEditingDish(null);
+    setSelectedImageFile(null);
+    setImagePreview(null);
   };
 
   const handleAllergenToggle = (allergen: string) => {
@@ -181,6 +240,86 @@ const DishManagement: React.FC = () => {
   const handleTagChange = (value: string) => {
     const tags = value.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
     setFormData(prev => ({ ...prev, tags }));
+  };
+
+  // Gestione upload / drag&drop immagine
+  const onFileInputChange = (file: File | null) => {
+    if (!file) {
+      setSelectedImageFile(null);
+      setImagePreview(null);
+      return;
+    }
+    setSelectedImageFile(file);
+    const preview = URL.createObjectURL(file);
+    setImagePreview(preview);
+  };
+
+  const clearSelectedImage = () => {
+    setSelectedImageFile(null);
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+    }
+    setImagePreview(null);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragActive(false);
+    const file = e.dataTransfer?.files?.[0];
+    if (file) onFileInputChange(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragActive(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragActive(false);
+  };
+
+  const migrateDishImagesToCloudinary = async () => {
+    if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
+      alert('Configurazione Cloudinary mancante: imposta VITE_CLOUDINARY_CLOUD_NAME e VITE_CLOUDINARY_UPLOAD_PRESET');
+      return;
+    }
+    setMigratingImages(true);
+    setMigrationResult({ processed: 0, updated: 0, failed: 0 });
+    let processed = 0;
+    let updated = 0;
+    let failed = 0;
+    for (const dish of dishes) {
+      const currentUrl = dish.image_url?.trim();
+      processed++;
+      if (!currentUrl) continue;
+      if (currentUrl.includes('res.cloudinary.com')) continue;
+      try {
+        const safeName = (dish.name || 'piatto').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        const fd = new FormData();
+        fd.append('file', currentUrl); // Cloudinary consente upload da URL remoto
+        fd.append('upload_preset', CLOUDINARY_UPLOAD_PRESET as string);
+        fd.append('folder', CLOUDINARY_FOLDER);
+        // unsigned upload: non sono consentiti use_filename/unique_filename
+        fd.append('public_id', `${safeName}-${dish.id}`);
+        fd.append('tags', 'dish');
+        fd.append('context', `dish=${safeName}`);
+        const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/upload`;
+        const resp = await fetch(cloudinaryUrl, { method: 'POST', body: fd });
+        const json = await resp.json();
+        if (!resp.ok) throw new Error(json?.error?.message || 'Upload a Cloudinary fallito');
+        const secureUrl = String(json.secure_url || json.url || '');
+        if (!secureUrl) throw new Error('Cloudinary non ha restituito un URL');
+        await updateDish(dish.id, { image_url: secureUrl });
+        updated++;
+      } catch (err) {
+        console.warn('Migrazione immagine fallita per', dish.name, err);
+        failed++;
+      }
+    }
+    setMigrationResult({ processed, updated, failed });
+    setMigratingImages(false);
+    alert(`Migrazione completata. Aggiornati: ${updated}. Falliti: ${failed}.`);
   };
 
   // Render principale del componente
@@ -411,6 +550,62 @@ const DishManagement: React.FC = () => {
                 </div>
               </div>
 
+              {/* Upload immagine con drag&drop */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Foto del Piatto (upload o trascina)
+                </label>
+                <div
+                  onDrop={handleDrop}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  className={`relative flex flex-col items-center justify-center w-full border-2 rounded-md p-4 transition-colors ${isDragActive ? 'border-amber-500 bg-amber-50' : 'border-dashed border-gray-300 bg-gray-50'}`}
+                >
+                  {imagePreview ? (
+                    <div className="w-full">
+                      <img src={imagePreview} alt="Anteprima" className="w-full h-40 object-cover rounded" />
+                    </div>
+                  ) : (
+                    <div className="text-center text-gray-600">
+                      <Upload className="w-6 h-6 mx-auto mb-2 text-amber-600" />
+                      <p className="text-sm">Trascina qui una foto del piatto</p>
+                      <p className="text-xs text-gray-500 mt-1">Oppure usa il pulsante qui sotto</p>
+                    </div>
+                  )}
+
+                  <div className="mt-3 flex items-center gap-3">
+                    <input
+                      id="dish-image-input"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => onFileInputChange(e.target.files?.[0] || null)}
+                    />
+                    <label
+                      htmlFor="dish-image-input"
+                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-md text-white ${uploadingImage ? 'bg-amber-400 cursor-not-allowed' : 'bg-amber-600 hover:bg-amber-700 cursor-pointer'}`}
+                    >
+                      <Upload className="w-4 h-4" />
+                      {uploadingImage ? 'Caricamento...' : 'Carica foto'}
+                    </label>
+                    {imagePreview && (
+                      <button
+                        type="button"
+                        onClick={clearSelectedImage}
+                        className="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
+                      >
+                        <X className="w-4 h-4" />
+                        Rimuovi
+                      </button>
+                    )}
+                  </div>
+
+                  <p className="text-xs text-gray-500 mt-2">
+                    L'immagine verrà caricata automaticamente al salvataggio del piatto.
+                  </p>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   URL Immagine
@@ -422,6 +617,14 @@ const DishManagement: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
                   placeholder="/images/nome-file.jpg o https://..."
                 />
+                {(!imagePreview && formData.image_url) && (
+                  <div className="mt-2">
+                    <img src={formData.image_url} alt="Anteprima URL" className="w-full h-32 object-cover rounded" />
+                  </div>
+                )}
+                <p className="text-xs text-gray-500 mt-1">
+                  In alternativa all'upload, puoi inserire direttamente un URL pubblico.
+                </p>
               </div>
 
               <div>

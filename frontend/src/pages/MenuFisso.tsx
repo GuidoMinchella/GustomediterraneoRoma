@@ -453,7 +453,7 @@ const MenuFisso: React.FC = () => {
                           {/* Immagine illustrativa di frittura sulla card */}
                           <div className="w-full h-40 overflow-hidden rounded-t-lg">
                             <img
-                              src="/images/img.webp"
+                              src="/images/frittura.jpg"
                               alt="Frittura mista"
                               className="w-full h-full object-cover"
                             />

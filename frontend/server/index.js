@@ -2,16 +2,15 @@ import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
 import Stripe from 'stripe';
+import { v2 as cloudinary } from 'cloudinary';
 
 dotenv.config();
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
-if (!stripeSecretKey) {
-  console.error('Missing STRIPE_SECRET_KEY in environment');
-  process.exit(1);
+const stripe = stripeSecretKey ? new Stripe(stripeSecretKey) : null;
+if (!stripe) {
+  console.warn('[Stripe] Configurazione mancante: disabilito le API di pagamento');
 }
-
-const stripe = new Stripe(stripeSecretKey);
 const app = express();
 
 app.use(cors({ origin: true }));
@@ -43,6 +42,7 @@ async function getOrCreateCustomerByEmail(email, name, userId) {
 }
 
 app.post('/api/create-checkout-session', async (req, res) => {
+  if (!stripe) return res.status(500).json({ error: 'Stripe non configurato' });
   try {
     const { order } = req.body;
     if (!order || !order.items || !Array.isArray(order.items)) {
@@ -138,6 +138,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
 });
 
 app.get('/api/checkout-session', async (req, res) => {
+  if (!stripe) return res.status(500).json({ error: 'Stripe non configurato' });
   try {
     const sessionId = req.query.session_id;
     if (!sessionId) {
@@ -159,6 +160,7 @@ app.get('/api/checkout-session', async (req, res) => {
 
 // Create PaymentIntent for embedded form
 app.post('/api/create-payment-intent', async (req, res) => {
+  if (!stripe) return res.status(500).json({ error: 'Stripe non configurato' });
   try {
     const { order } = req.body;
     if (!order || !order.items || !Array.isArray(order.items)) {
@@ -231,6 +233,7 @@ app.post('/api/create-payment-intent', async (req, res) => {
 
 // Retrieve PaymentIntent status
 app.get('/api/payment-intent', async (req, res) => {
+  if (!stripe) return res.status(500).json({ error: 'Stripe non configurato' });
   try {
     const id = req.query.payment_intent;
     if (!id) return res.status(400).json({ error: 'Missing payment_intent' });
@@ -247,4 +250,82 @@ app.get('/api/payment-intent', async (req, res) => {
 const port = Number(process.env.PORT) || Number(process.env.SERVER_PORT) || 4242;
 app.listen(port, () => {
   console.log(`Stripe server listening on port ${port}`);
+});
+
+// ============================
+// Cloudinary: configurazione e API
+// ============================
+const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME || process.env.VITE_CLOUDINARY_CLOUD_NAME;
+const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY;
+const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET;
+const CLOUDINARY_FOLDER = process.env.CLOUDINARY_FOLDER || process.env.VITE_CLOUDINARY_FOLDER || 'folder';
+
+if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET) {
+  console.warn('[Cloudinary] Configurazione mancante: CLOUDINARY_CLOUD_NAME/API_KEY/API_SECRET. Le API Cloudinary admin saranno disabilitate.');
+} else {
+  cloudinary.config({
+    cloud_name: CLOUDINARY_CLOUD_NAME,
+    api_key: CLOUDINARY_API_KEY,
+    api_secret: CLOUDINARY_API_SECRET,
+  });
+}
+
+// Elimina una risorsa da Cloudinary (richiede credenziali server)
+app.delete('/api/cloudinary-delete', async (req, res) => {
+  try {
+    if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET) {
+      return res.status(500).json({ error: 'Cloudinary non configurato sul server' });
+    }
+    const { public_id } = req.body || {};
+    if (!public_id || typeof public_id !== 'string') {
+      return res.status(400).json({ error: 'public_id mancante o non valido' });
+    }
+    const result = await cloudinary.uploader.destroy(public_id, { invalidate: true });
+    return res.status(200).json({ result });
+  } catch (err) {
+    console.error('[Cloudinary] Errore eliminazione', err);
+    res.status(500).json({ error: err?.message || 'Errore eliminazione Cloudinary' });
+  }
+});
+
+// (Opzionale) Lista immagini della cartella gestita
+app.get('/api/cloudinary-list', async (req, res) => {
+  try {
+    if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET) {
+      return res.status(500).json({ error: 'Cloudinary non configurato sul server' });
+    }
+    const folder = String((req.query?.folder || CLOUDINARY_FOLDER)).trim();
+    const max = Math.min(Number(req.query?.max || 100), 500);
+    const next_cursor = req.query?.next_cursor || undefined;
+
+    const expr = `folder="${folder}" AND resource_type:image`;
+    let result;
+    try {
+      const search = cloudinary.search.expression(expr).sort_by('created_at','desc').max_results(max);
+      if (next_cursor) search.next_cursor(next_cursor);
+      result = await search.execute();
+    } catch (searchErr) {
+      const prefix = folder.endsWith('/') ? folder : `${folder}/`;
+      const admin = await cloudinary.api.resources({ type: 'upload', prefix, max_results: max, next_cursor });
+      result = {
+        resources: admin.resources || [],
+        total_count: admin.total_count || (admin.resources ? admin.resources.length : 0),
+        next_cursor: admin.next_cursor || null,
+      };
+    }
+
+    const resources = (result.resources || []).map(r => ({
+      public_id: r.public_id,
+      url: r.secure_url || r.url,
+      folder: r.folder,
+      created_at: r.created_at,
+      width: r.width,
+      height: r.height,
+      format: r.format,
+    }));
+    res.status(200).json({ resources, total_count: result.total_count || resources.length, next_cursor: result.next_cursor || null });
+  } catch (err) {
+    console.error('[Cloudinary] Errore lista', err);
+    res.status(500).json({ error: err?.message || 'Errore lista Cloudinary' });
+  }
 });

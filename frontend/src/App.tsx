@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { DishProvider } from './context/DishContext';
+import { GalleryProvider } from './context/GalleryContext';
 import Layout from './components/Layout/Layout';
 import ScrollToTop from './components/ScrollToTop';
 import AdminRoute from './components/ProtectedRoute/AdminRoute';
@@ -24,7 +25,8 @@ function App() {
   return (
     <AuthProvider>
       <DishProvider>
-        <CartProvider>
+        <GalleryProvider>
+          <CartProvider>
           <ScrollToTop />
           <Layout>
             <CookieConsent />
@@ -51,7 +53,8 @@ function App() {
               />
             </Routes>
           </Layout>
-        </CartProvider>
+          </CartProvider>
+        </GalleryProvider>
       </DishProvider>
     </AuthProvider>
   );

@@ -4,10 +4,12 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "build": "echo \"No build step: Vercel Node serverless\""
+    
   },
   "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "raw-body": "^3.0.0",
     "stripe": "^19.1.0",
-    "raw-body": "^3.0.0"
+    "cloudinary": "^1.41.3"
   }
 }

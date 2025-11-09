@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import DishManagement from '../components/Admin/DishManagement';
+import GalleryManagement from '../components/Admin/GalleryManagement';
 import MenuDelGiornoManagement from '../components/Admin/MenuDelGiornoManagement';
 import MenuFissoManagement from '../components/Admin/MenuFissoManagement';
 import OrdersManagement from '../components/Admin/OrdersManagement';
 import AdminLoginModal from '../components/Auth/AdminLoginModal';
-import { Users, ChefHat, ShoppingBag, BarChart3, Package, LogOut } from 'lucide-react';
+import { Users, ChefHat, ShoppingBag, BarChart3, Package, LogOut, Images } from 'lucide-react';
 import AdminStats from '../components/Admin/AdminStats';
 import { useAuth } from '../context/AuthContext';
 import Button from '../components/UI/Button';
@@ -118,6 +119,7 @@ const AdminDashboard: React.FC = () => {
     { id: 'daily-menu', label: 'Menu del Giorno', icon: ChefHat },
     { id: 'fixed-menu', label: 'Menu Fisso', icon: ShoppingBag },
     { id: 'dishes', label: 'Gestione Piatti', icon: Users },
+    { id: 'gallery', label: 'Gestione Galleria', icon: Images },
     { id: 'orders', label: 'Ordini', icon: Package },
     { id: 'analytics', label: 'Statistiche', icon: BarChart3 },
   ];
@@ -130,6 +132,8 @@ const AdminDashboard: React.FC = () => {
         return <MenuFissoManagement />;
       case 'dishes':
         return <DishManagement />;
+      case 'gallery':
+        return <GalleryManagement />;
       case 'orders':
         return <OrdersManagement />;
       case 'analytics':
@@ -154,6 +158,16 @@ const AdminDashboard: React.FC = () => {
               </p>
             </div>
             <div className="flex items-center space-x-4">
+              {/* Apri pagina pubblica Galleria */}
+              <a
+                href="/galleria"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                <Images className="w-4 h-4 mr-1" />
+                Apri Galleria
+              </a>
               {/* Logout Button */}
               <button
                 onClick={handleAdminLogout}

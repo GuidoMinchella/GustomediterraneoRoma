@@ -1,7 +1,11 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import { useGallery } from '../context/GalleryContext';
 
 const Galleria: React.FC = () => {
   const [selectedTag, setSelectedTag] = useState<string>('all');
+  const { photos, loading, error } = useGallery();
+
+  // Vista statica della galleria senza integrazione foto piatti
 
   // Categorie e immagini locali dal folder public/images
   const categories: Record<string, { label: string; images: string[] }> = {
@@ -111,6 +115,7 @@ const Galleria: React.FC = () => {
 
   const tags = [
     { id: 'all', label: 'Tutte le Foto' },
+    { id: 'piatti', label: 'Piatti' },
     { id: 'locale', label: 'Locale' },
     { id: 'panini', label: 'Panini' },
     { id: 'fritti', label: 'Fritti' },
@@ -118,7 +123,14 @@ const Galleria: React.FC = () => {
     { id: 'specialita', label: 'Specialità' },
   ];
 
-  const orderedKeys: string[] = ['locale', 'panini', 'fritti', 'crudo', 'specialita'];
+  // Merge delle categorie statiche con la sezione Piatti dinamica (foto gestite dall'admin)
+  const mergedCategories = useMemo(() => {
+    const base = { ...categories } as Record<string, { label: string; images: string[] }>;
+    base['piatti'] = { label: 'Piatti', images: photos.map(p => p.url) };
+    return base;
+  }, [categories, photos]);
+
+  const orderedKeys: string[] = ['piatti', 'locale', 'panini', 'fritti', 'crudo', 'specialita'];
   const keysToRender = selectedTag === 'all' ? orderedKeys : orderedKeys.filter(k => k === selectedTag);
 
   return (
@@ -161,12 +173,23 @@ const Galleria: React.FC = () => {
           {/* Sections by category */}
           <div className="space-y-12">
             {keysToRender.map((key) => {
-              const section = categories[key];
+              const section = mergedCategories[key];
               return (
                 <section key={key}>
                   <h2 className="font-serif text-2xl md:text-3xl font-bold text-white mb-4 text-center">
                     {section.label}
                   </h2>
+                  {key === 'piatti' && loading && (
+                    <div className="flex justify-center items-center py-8">
+                      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-mediterranean-marroncino"></div>
+                      <span className="ml-3 text-white/90">Caricamento foto dei piatti...</span>
+                    </div>
+                  )}
+                  {key === 'piatti' && error && (
+                    <div className="text-center py-6">
+                      <p className="text-amber-200">{error}</p>
+                    </div>
+                  )}
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {section.images.map((src, idx) => (
                       <div key={idx} className="relative aspect-square overflow-hidden rounded-lg">

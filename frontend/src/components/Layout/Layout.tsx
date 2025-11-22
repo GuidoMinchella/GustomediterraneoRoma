@@ -89,7 +89,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <div className="min-h-screen bg-mediterranean-bianco">
       {!hideChrome && <Header />}
-      <main>
+      <main className={!hideChrome ? 'pt-16' : ''}>
         {children}
       </main>
       {!hideChrome && <Footer />}

@@ -30,6 +30,9 @@ const DishManagement: React.FC = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState<boolean>(false);
   const [isDragActive, setIsDragActive] = useState<boolean>(false);
+  const [submitting, setSubmitting] = useState<boolean>(false);
+  const [submitNotice, setSubmitNotice] = useState<null | { type: 'success' | 'error'; text: string }>(null);
+  const [noticeVisible, setNoticeVisible] = useState<boolean>(false);
 
   // Stato per migrazione immagini → deve stare sopra qualsiasi early return
   const [migratingImages, setMigratingImages] = useState(false);
@@ -56,6 +59,16 @@ const DishManagement: React.FC = () => {
   useEffect(() => {
     fetchDishes();
   }, [fetchDishes]); // Ora fetchDishes è memoizzato, quindi è sicuro includerlo
+
+  // Gestione visibilità/animazione notifica di submit
+  useEffect(() => {
+    if (submitNotice) {
+      // Mostra con animazione
+      setNoticeVisible(true);
+    } else {
+      setNoticeVisible(false);
+    }
+  }, [submitNotice]);
 
   // Se c'è un errore, mostra un messaggio di errore
   if (error) {
@@ -107,6 +120,7 @@ const DishManagement: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitting(true);
     
     // Rimuovi qualsiasi tag 'by_weight': non serve mostrarlo nei tag
     const nextTags = Array.from(new Set(
@@ -149,6 +163,7 @@ const DishManagement: React.FC = () => {
         console.error('Errore upload immagine su Cloudinary:', err);
         alert(`Errore nel caricamento della foto: ${err?.message || 'Verifica la configurazione Cloudinary (cloud name e upload preset)'}`);
         setUploadingImage(false);
+        setSubmitting(false);
         return; // Interrompi salvataggio se l'immagine non si carica
       } finally {
         setUploadingImage(false);
@@ -174,11 +189,21 @@ const DishManagement: React.FC = () => {
       setSelectedImageFile(null);
       setImagePreview(null);
       setIsModalOpen(false);
+      setSubmitNotice({ type: 'success', text: 'Piatto caricato correttamente!!' });
+      // Porta l'utente al top della pagina Gestione Piatti
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+      setSubmitting(false);
     } catch (error) {
       console.error('Errore nel salvare il piatto:', error);
-      // Mostra un messaggio di errore più dettagliato
-      const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
-      alert(`Errore nel salvare il piatto: ${errorMessage}`);
+      setIsModalOpen(false);
+      setSubmitNotice({ type: 'error', text: 'Errore nel caricamento del piatto' });
+      // In caso di errore, porta comunque l'utente al top per vedere la notifica
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+      setSubmitting(false);
     }
   };
 
@@ -325,6 +350,23 @@ const DishManagement: React.FC = () => {
   // Render principale del componente
   return (
     <div className="px-2 sm:px-6 py-4 sm:py-6">
+      {submitNotice && (
+        <div
+          className={`fixed left-1/2 top-4 -translate-x-1/2 z-[60] p-3 rounded-md border shadow transition-transform duration-500 ease-out ${noticeVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'} ${submitNotice.type === 'success' ? 'bg-green-100 border-green-200 text-green-800' : 'bg-red-100 border-red-200 text-red-800'}`}
+        >
+          <div className="flex justify-between items-center">
+            <span className="font-medium">{submitNotice.text}</span>
+            <button
+              type="button"
+              aria-label="Chiudi notifica"
+              onClick={() => setSubmitNotice(null)}
+              className="ml-4 p-1 rounded hover:bg-white/50"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
       <div className="mb-6 text-center">
         <h2 className="text-2xl font-bold text-gray-800">Gestione Piatti</h2>
         <p className="text-gray-600 mt-2">Gestisci il menu del ristorante - {dishes.length} piatti totali</p>
@@ -368,7 +410,9 @@ const DishManagement: React.FC = () => {
       ) : (
         <div className="grid gap-3 sm:gap-4">
           {categories.map(category => {
-            const categoryDishes = dishes.filter(dish => dish.category === category);
+            const categoryDishes = dishes
+              .filter(dish => dish.category === category)
+              .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
             if (categoryDishes.length === 0) return null;
 
             return (
@@ -464,7 +508,26 @@ const DishManagement: React.FC = () => {
       {/* Modal per Aggiungere/Modificare Piatto */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="relative bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            {submitting && (
+              <div className="absolute inset-0 z-20 bg-white/70 backdrop-blur-sm flex items-center justify-center">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-mediterranean-marroncino mx-auto mb-3"></div>
+                  <p className="text-gray-700 font-medium">Loading...</p>
+                </div>
+              </div>
+            )}
+            <button
+              type="button"
+              aria-label="Chiudi"
+              onClick={() => {
+                setIsModalOpen(false);
+                resetForm();
+              }}
+              className="absolute top-3 right-3 bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-700 rounded-full p-1 shadow z-10"
+            >
+              <X className="w-5 h-5" />
+            </button>
             <h3 className="text-xl font-bold mb-4">
               {editingDish ? 'Modifica Piatto' : 'Aggiungi Nuovo Piatto'}
             </h3>
@@ -562,8 +625,28 @@ const DishManagement: React.FC = () => {
                   className={`relative flex flex-col items-center justify-center w-full border-2 rounded-md p-4 transition-colors ${isDragActive ? 'border-amber-500 bg-amber-50' : 'border-dashed border-gray-300 bg-gray-50'}`}
                 >
                   {imagePreview ? (
-                    <div className="w-full">
+                    <div className="w-full relative">
                       <img src={imagePreview} alt="Anteprima" className="w-full h-40 object-cover rounded" />
+                      <button
+                        type="button"
+                        onClick={clearSelectedImage}
+                        aria-label="Rimuovi foto"
+                        className="absolute top-2 right-2 bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-700 rounded-full p-1 shadow"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : formData.image_url ? (
+                    <div className="w-full relative">
+                      <img src={formData.image_url} alt="Anteprima" className="w-full h-40 object-cover rounded" />
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, image_url: '' }))}
+                        aria-label="Rimuovi foto"
+                        className="absolute top-2 right-2 bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-700 rounded-full p-1 shadow"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
                     </div>
                   ) : (
                     <div className="text-center text-gray-600">
@@ -581,22 +664,14 @@ const DishManagement: React.FC = () => {
                       className="hidden"
                       onChange={(e) => onFileInputChange(e.target.files?.[0] || null)}
                     />
-                    <label
-                      htmlFor="dish-image-input"
-                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-md text-white ${uploadingImage ? 'bg-amber-400 cursor-not-allowed' : 'bg-amber-600 hover:bg-amber-700 cursor-pointer'}`}
-                    >
-                      <Upload className="w-4 h-4" />
-                      {uploadingImage ? 'Caricamento...' : 'Carica foto'}
-                    </label>
-                    {imagePreview && (
-                      <button
-                        type="button"
-                        onClick={clearSelectedImage}
-                        className="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
+                    {!imagePreview && !formData.image_url && (
+                      <label
+                        htmlFor="dish-image-input"
+                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-md text-white ${uploadingImage ? 'bg-amber-400 cursor-not-allowed' : 'bg-amber-600 hover:bg-amber-700 cursor-pointer'}`}
                       >
-                        <X className="w-4 h-4" />
-                        Rimuovi
-                      </button>
+                        <Upload className="w-4 h-4" />
+                        {uploadingImage ? 'Caricamento...' : 'Carica foto'}
+                      </label>
                     )}
                   </div>
 
@@ -695,9 +770,10 @@ const DishManagement: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700"
+                  disabled={submitting || uploadingImage}
+                  className={`px-4 py-2 rounded-md text-white ${submitting || uploadingImage ? 'bg-amber-400 cursor-not-allowed' : 'bg-amber-600 hover:bg-amber-700'}`}
                 >
-                  {editingDish ? 'Aggiorna' : 'Aggiungi'}
+                  {submitting ? 'Loading...' : (editingDish ? 'Aggiorna' : 'Aggiungi')}
                 </button>
               </div>
             </form>

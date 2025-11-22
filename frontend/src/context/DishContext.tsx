@@ -237,8 +237,7 @@ export const DishProvider: React.FC<DishProviderProps> = ({ children }) => {
       const { data, error } = await supabase
         .from('dishes')
         .select('*')
-        .order('category', { ascending: true })
-        .order('name', { ascending: true });
+        .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Errore nel caricamento dei piatti:', error);
@@ -285,7 +284,8 @@ export const DishProvider: React.FC<DishProviderProps> = ({ children }) => {
         throw new Error('No data returned from database');
       }
 
-      setDishes(prev => [...prev, data]);
+      // Prepend per visualizzare subito l'ultimo inserito in cima
+      setDishes(prev => [data, ...prev]);
       console.log('Dish added successfully:', data);
     } catch (err: any) {
       console.error('Error adding dish:', err);
